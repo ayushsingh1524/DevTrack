@@ -51,6 +51,7 @@ export function useWebSocket() {
         if (isAuthenticated && reconnectAttempts.current < maxReconnectAttempts) {
           const timeout = Math.min(1000 * (2 ** reconnectAttempts.current), 15000);
           reconnectAttempts.current += 1;
+          // eslint-disable-next-line @typescript-eslint/no-use-before-define
           reconnectTimer.current = setTimeout(() => connect(), timeout);
         }
       };

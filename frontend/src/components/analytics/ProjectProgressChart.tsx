@@ -15,6 +15,28 @@ import { useAnalyticsProductivity } from "@/hooks/useAnalytics";
 import { Loader2, FolderGit2 } from "lucide-react";
 import { motion } from "framer-motion";
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="rounded-xl border border-white/10 bg-[#0a0a0c]/90 p-4 shadow-2xl backdrop-blur-md">
+        <p className="mb-2 font-semibold text-white/90">{data.name}</p>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-purple-400 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-purple-500" />
+            {data.progress}% Completed
+          </p>
+          <p className="text-sm font-medium text-white/60 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-white/20" />
+            {data.total_tasks} Total Tasks
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function ProjectProgressChart() {
   const { data, isLoading, isError } = useAnalyticsProductivity();
 
@@ -35,28 +57,6 @@ export function ProjectProgressChart() {
   }
 
   const chartData = data.project_stats || [];
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="rounded-xl border border-white/10 bg-[#0a0a0c]/90 p-4 shadow-2xl backdrop-blur-md">
-          <p className="mb-2 font-semibold text-white/90">{data.name}</p>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-purple-400 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-purple-500" />
-              {data.progress}% Completed
-            </p>
-            <p className="text-sm font-medium text-white/60 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-white/20" />
-              {data.total_tasks} Total Tasks
-            </p>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <motion.div

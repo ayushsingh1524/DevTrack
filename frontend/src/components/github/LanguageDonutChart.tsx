@@ -6,6 +6,21 @@ import { GithubStats } from "@/services/github.service";
 import { motion } from "framer-motion";
 import { Code2 } from "lucide-react";
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="rounded-xl border border-white/10 bg-[#0d1117]/95 p-3 shadow-2xl backdrop-blur-md">
+        <p className="font-semibold text-white/90 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
+          {data.name}: <span className="text-white/60">{data.value}%</span>
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 interface LanguageDonutChartProps {
   stats: GithubStats;
   isSyncing: boolean;
@@ -22,21 +37,6 @@ export function LanguageDonutChart({ stats, isSyncing }: LanguageDonutChartProps
       color: COLORS[index % COLORS.length]
     })).sort((a, b) => b.value - a.value);
   }, [stats?.top_languages]);
-
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="rounded-xl border border-white/10 bg-[#0d1117]/95 p-3 shadow-2xl backdrop-blur-md">
-          <p className="font-semibold text-white/90 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
-            {data.name}: <span className="text-white/60">{data.value}%</span>
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <motion.div

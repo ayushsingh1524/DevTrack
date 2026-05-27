@@ -16,6 +16,27 @@ import { useAnalyticsProductivity } from "@/hooks/useAnalytics";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-[#0a0a0c]/90 p-4 shadow-2xl backdrop-blur-md">
+        <p className="mb-2 font-semibold text-white/90">{label}</p>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-blue-400 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
+            {payload[0].value} Hours Coded
+          </p>
+          <p className="text-sm font-medium text-green-400 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            {payload[1].value} Tasks Completed
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function ProductivityChart() {
   const { data, isLoading, isError } = useAnalyticsProductivity();
 
@@ -34,27 +55,6 @@ export function ProductivityChart() {
       </div>
     );
   }
-
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="rounded-xl border border-white/10 bg-[#0a0a0c]/90 p-4 shadow-2xl backdrop-blur-md">
-          <p className="mb-2 font-semibold text-white/90">{label}</p>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-blue-400 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
-              {payload[0].value} Hours Coded
-            </p>
-            <p className="text-sm font-medium text-green-400 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-green-500" />
-              {payload[1].value} Tasks Completed
-            </p>
-          </div>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <motion.div

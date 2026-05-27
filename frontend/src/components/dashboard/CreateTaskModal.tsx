@@ -84,7 +84,7 @@ export function CreateTaskModal() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => setCreateModalOpen(false)}
-          className="absolute inset-0 bg-black/60 backdrop-blur-md"
+          className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-sm"
         />
 
         {/* Modal content */}
@@ -93,16 +93,13 @@ export function CreateTaskModal() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#0c0c0e] p-8 shadow-2xl z-10"
+          className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-card p-8 shadow-xl z-10 theme-transition"
         >
-          {/* Glass header border decoration */}
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white tracking-tight">Create New Task</h2>
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Create New Task</h2>
             <button
               onClick={() => setCreateModalOpen(false)}
-              className="text-white/40 hover:text-white rounded-full p-1.5 hover:bg-white/5 transition-all"
+              className="text-muted-foreground hover:text-foreground rounded-full p-1.5 hover:bg-accent transition-all"
             >
               <X size={18} />
             </button>
@@ -111,26 +108,26 @@ export function CreateTaskModal() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Title field */}
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-white/70">Title</Label>
+              <Label htmlFor="title" className="text-muted-foreground">Title</Label>
               <Input
                 id="title"
                 placeholder="Fix layout shift in navbar..."
-                className="bg-white/5 border-white/10 focus:border-primary/50 text-white h-10"
+                className="h-10"
                 {...register("title")}
               />
               {errors.title && (
-                <p className="text-xs text-red-400 font-medium">{errors.title.message}</p>
+                <p className="text-xs text-destructive font-medium">{errors.title.message}</p>
               )}
             </div>
 
             {/* Description field */}
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-white/70">Description</Label>
+              <Label htmlFor="description" className="text-muted-foreground">Description</Label>
               <textarea
                 id="description"
                 placeholder="Provide a detailed description of the task..."
                 rows={3}
-                className="w-full rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white placeholder:text-white/20 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+                className="w-full rounded-lg border border-border bg-input p-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
                 {...register("description")}
               />
             </div>
@@ -139,10 +136,10 @@ export function CreateTaskModal() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Status */}
               <div className="space-y-2">
-                <Label htmlFor="status" className="text-white/70">Status</Label>
+                <Label htmlFor="status" className="text-muted-foreground">Status</Label>
                 <select
                   id="status"
-                  className="w-full h-10 rounded-lg border border-white/10 bg-[#121216] px-3 text-sm text-white focus:border-primary/50 focus:outline-none transition-all"
+                  className="w-full h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
                   {...register("status")}
                 >
                   <option value="todo">Todo</option>
@@ -154,10 +151,10 @@ export function CreateTaskModal() {
 
               {/* Priority */}
               <div className="space-y-2">
-                <Label htmlFor="priority" className="text-white/70">Priority</Label>
+                <Label htmlFor="priority" className="text-muted-foreground">Priority</Label>
                 <select
                   id="priority"
-                  className="w-full h-10 rounded-lg border border-white/10 bg-[#121216] px-3 text-sm text-white focus:border-primary/50 focus:outline-none transition-all"
+                  className="w-full h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
                   {...register("priority")}
                 >
                   <option value="low">Low</option>
@@ -169,10 +166,10 @@ export function CreateTaskModal() {
 
               {/* Assignee */}
               <div className="space-y-2">
-                <Label htmlFor="assignee_id" className="text-white/70">Assignee</Label>
+                <Label htmlFor="assignee_id" className="text-muted-foreground">Assignee</Label>
                 <select
                   id="assignee_id"
-                  className="w-full h-10 rounded-lg border border-white/10 bg-[#121216] px-3 text-sm text-white focus:border-primary/50 focus:outline-none transition-all"
+                  className="w-full h-10 rounded-lg border border-border bg-input px-3 text-sm text-foreground focus:border-primary focus:outline-none transition-all"
                   {...register("assignee_id")}
                 >
                   <option value="">Unassigned</option>
@@ -186,44 +183,43 @@ export function CreateTaskModal() {
 
               {/* Due Date */}
               <div className="space-y-2">
-                <Label htmlFor="due_date" className="text-white/70">Due Date</Label>
+                <Label htmlFor="due_date" className="text-muted-foreground">Due Date</Label>
                 <div className="relative">
                   <Input
                     id="due_date"
                     type="date"
-                    className="bg-white/5 border-white/10 focus:border-primary/50 text-white h-10 pl-10"
+                    className="h-10 pl-10"
                     {...register("due_date")}
                   />
-                  <Calendar className="absolute left-3.5 top-3 text-white/30" size={16} />
+                  <Calendar className="absolute left-3.5 top-3 text-muted-foreground" size={16} />
                 </div>
               </div>
             </div>
 
             {/* Tags Input */}
             <div className="space-y-2">
-              <Label htmlFor="tagsInput" className="text-white/70">Tags (comma-separated)</Label>
+              <Label htmlFor="tagsInput" className="text-muted-foreground">Tags (comma-separated)</Label>
               <Input
                 id="tagsInput"
                 placeholder="bug, frontend, ui"
-                className="bg-white/5 border-white/10 focus:border-primary/50 text-white h-10"
+                className="h-10"
                 {...register("tagsInput")}
               />
             </div>
 
             {/* Buttons */}
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setCreateModalOpen(false)}
-                className="text-white/60 hover:text-white hover:bg-white/5"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={createTask.isPending}
-                className="bg-primary hover:bg-primary/80 text-white font-medium shadow-[0_0_15px_rgba(59,130,246,0.3)] min-w-[100px]"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium min-w-[100px]"
               >
                 {createTask.isPending ? (
                   <>

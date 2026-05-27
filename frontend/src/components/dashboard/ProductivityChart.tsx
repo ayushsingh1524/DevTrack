@@ -33,35 +33,31 @@ export function ProductivityChart() {
   const chartData = data?.weekly_productivity || [];
 
   return (
-    <GlassCard className="p-6 border-white/5 flex flex-col h-[400px]">
+    <GlassCard className="p-6 flex flex-col h-[400px]">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <BarChart2 className="text-blue-400" size={20} />
-          <h3 className="text-lg font-semibold text-white/90">Productivity Analysis</h3>
+          <BarChart2 className="text-chart-1" size={20} />
+          <h3 className="text-lg font-semibold text-foreground">Productivity Analysis</h3>
         </div>
-        <span className="text-xs text-white/40">Weekly Overview</span>
+        <span className="text-xs text-muted-foreground">Weekly Overview</span>
       </div>
 
       <div className="flex-1 min-h-0 w-full relative">
         {!mounted || isLoading ? (
           <div className="w-full h-full flex flex-col gap-4">
             <div className="flex items-end justify-between flex-1 gap-2">
-              <Skeleton className="h-[20%] w-[10%] bg-white/10" />
-              <Skeleton className="h-[40%] w-[10%] bg-white/10" />
-              <Skeleton className="h-[30%] w-[10%] bg-white/10" />
-              <Skeleton className="h-[80%] w-[10%] bg-white/10" />
-              <Skeleton className="h-[70%] w-[10%] bg-white/10" />
-              <Skeleton className="h-[15%] w-[10%] bg-white/10" />
-              <Skeleton className="h-[25%] w-[10%] bg-white/10" />
+              <Skeleton className="h-[20%] w-[10%] bg-muted" />
+              <Skeleton className="h-[40%] w-[10%] bg-muted" />
+              <Skeleton className="h-[30%] w-[10%] bg-muted" />
+              <Skeleton className="h-[80%] w-[10%] bg-muted" />
+              <Skeleton className="h-[70%] w-[10%] bg-muted" />
+              <Skeleton className="h-[15%] w-[10%] bg-muted" />
+              <Skeleton className="h-[25%] w-[10%] bg-muted" />
             </div>
             <div className="flex justify-between">
-              <Skeleton className="h-4 w-8 bg-white/10" />
-              <Skeleton className="h-4 w-8 bg-white/10" />
-              <Skeleton className="h-4 w-8 bg-white/10" />
-              <Skeleton className="h-4 w-8 bg-white/10" />
-              <Skeleton className="h-4 w-8 bg-white/10" />
-              <Skeleton className="h-4 w-8 bg-white/10" />
-              <Skeleton className="h-4 w-8 bg-white/10" />
+              {Array(7).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-4 w-8 bg-muted" />
+              ))}
             </div>
           </div>
         ) : (
@@ -72,33 +68,33 @@ export function ProductivityChart() {
             >
               <defs>
                 <linearGradient id="hoursGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
               <XAxis
                 dataKey="name"
-                stroke="rgba(255,255,255,0.3)"
+                stroke="var(--muted-foreground)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <YAxis
-                stroke="rgba(255,255,255,0.3)"
+                stroke="var(--muted-foreground)"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "rgba(10, 10, 12, 0.9)",
-                  borderColor: "rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "var(--popover)",
+                  borderColor: "var(--border)",
                   borderRadius: "12px",
-                  backdropFilter: "blur(8px)",
+                  color: "var(--popover-foreground)",
                 }}
-                labelStyle={{ color: "rgba(255, 255, 255, 0.5)", fontWeight: "bold" }}
-                itemStyle={{ color: "#fff" }}
+                labelStyle={{ color: "var(--muted-foreground)", fontWeight: "bold" }}
+                itemStyle={{ color: "var(--foreground)" }}
               />
               <Legend
                 verticalAlign="top"
@@ -106,7 +102,7 @@ export function ProductivityChart() {
                 iconType="circle"
                 iconSize={8}
                 formatter={(value) => (
-                  <span className="text-xs text-white/70 ml-1">
+                  <span className="text-xs text-muted-foreground ml-1">
                     {value === "hours" ? "Coding Hours" : "Tasks Completed"}
                   </span>
                 )}
@@ -114,7 +110,7 @@ export function ProductivityChart() {
               <Area
                 type="monotone"
                 dataKey="hours"
-                stroke="#3b82f6"
+                stroke="var(--chart-1)"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#hoursGrad)"
@@ -122,9 +118,9 @@ export function ProductivityChart() {
               <Line
                 type="monotone"
                 dataKey="tasks"
-                stroke="#f97316"
+                stroke="var(--chart-3)"
                 strokeWidth={2.5}
-                dot={{ fill: "#f97316", r: 4, strokeWidth: 1, stroke: "#18181b" }}
+                dot={{ fill: "var(--chart-3)", r: 4, strokeWidth: 1, stroke: "var(--card)" }}
                 activeDot={{ r: 6, strokeWidth: 0 }}
               />
             </ComposedChart>
@@ -135,7 +131,7 @@ export function ProductivityChart() {
   );
 }
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#a855f7"];
+const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
 
 export function LanguageStats() {
   const { data, isLoading, isError } = useDashboardStats();
@@ -150,19 +146,19 @@ export function LanguageStats() {
   const languageData = data?.language_stats || [];
 
   return (
-    <GlassCard className="p-6 border-white/5 flex flex-col h-[400px]">
+    <GlassCard className="p-6 flex flex-col h-[400px]">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <PieIcon className="text-purple-400" size={20} />
-          <h3 className="text-lg font-semibold text-white/90">Language Distribution</h3>
+          <PieIcon className="text-chart-4" size={20} />
+          <h3 className="text-lg font-semibold text-foreground">Language Distribution</h3>
         </div>
-        <span className="text-xs text-white/40">Technologies</span>
+        <span className="text-xs text-muted-foreground">Technologies</span>
       </div>
 
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-6 min-h-0 w-full relative">
         {!mounted || isLoading ? (
           <div className="w-full h-full flex items-center justify-center">
-            <Skeleton className="h-44 w-44 rounded-full bg-white/10" />
+            <Skeleton className="h-44 w-44 rounded-full bg-muted" />
           </div>
         ) : (
           <>
@@ -182,19 +178,19 @@ export function LanguageStats() {
                       <Cell
                         key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}
-                        stroke="rgba(0,0,0,0.4)"
-                        strokeWidth={1}
+                        stroke="var(--card)"
+                        strokeWidth={2}
                       />
                     ))}
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "rgba(10, 10, 12, 0.9)",
-                      borderColor: "rgba(255, 255, 255, 0.1)",
+                      backgroundColor: "var(--popover)",
+                      borderColor: "var(--border)",
                       borderRadius: "12px",
-                      backdropFilter: "blur(8px)",
+                      color: "var(--popover-foreground)",
                     }}
-                    itemStyle={{ color: "#fff" }}
+                    itemStyle={{ color: "var(--foreground)" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -209,19 +205,17 @@ export function LanguageStats() {
                         className="w-3 h-3 rounded-full shrink-0"
                         style={{ backgroundColor: COLORS[index % COLORS.length] }}
                       />
-                      <span className="text-sm font-semibold text-white/80">{entry.name}</span>
+                      <span className="text-sm font-semibold text-foreground/80">{entry.name}</span>
                     </div>
-                    <span className="text-xs text-white/50">{entry.value}%</span>
+                    <span className="text-xs text-muted-foreground">{entry.value}%</span>
                   </div>
                   
-                  {/* Custom animated/harmonious progress bar */}
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
                         width: `${entry.value}%`,
                         backgroundColor: COLORS[index % COLORS.length],
-                        boxShadow: `0 0 10px ${COLORS[index % COLORS.length]}33`
                       }}
                     />
                   </div>

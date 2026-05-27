@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Task } from "@/services/task.service";
 import { useTaskStore } from "@/store/taskStore";
-import { Clock, MessageSquare, Paperclip, AlertCircle, GripVertical } from "lucide-react";
+import { Clock, MessageSquare, GripVertical } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
@@ -39,15 +39,15 @@ export function KanbanCard({ task }: KanbanCardProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "low":
-        return "bg-green-500/20 text-green-400";
+        return "bg-green-500/15 text-green-600 dark:text-green-400";
       case "medium":
-        return "bg-yellow-500/20 text-yellow-400";
+        return "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400";
       case "high":
-        return "bg-orange-500/20 text-orange-400";
+        return "bg-orange-500/15 text-orange-600 dark:text-orange-400";
       case "urgent":
-        return "bg-red-500/20 text-red-400 border border-red-500/30";
+        return "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/20";
       default:
-        return "bg-white/10 text-white/60";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -58,7 +58,7 @@ export function KanbanCard({ task }: KanbanCardProps) {
       <div
         ref={setNodeRef}
         style={style}
-        className="w-full h-[120px] rounded-xl border-2 border-dashed border-primary/50 bg-primary/10 opacity-50"
+        className="w-full h-[120px] rounded-xl border-2 border-dashed border-primary/50 bg-primary/5 opacity-50"
       />
     );
   }
@@ -67,14 +67,14 @@ export function KanbanCard({ task }: KanbanCardProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative w-full rounded-xl border border-white/5 bg-[#1a1a20] p-4 shadow-sm hover:border-white/10 transition-colors flex flex-col gap-3 cursor-pointer"
+      className="group relative w-full rounded-xl border border-border bg-card p-4 shadow-sm hover:shadow-md transition-all flex flex-col gap-3 cursor-pointer theme-transition"
       onClick={() => setActiveTaskId(task.id)}
     >
       {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-3 right-2 p-1 text-white/0 group-hover:text-white/20 hover:!text-white/60 cursor-grab active:cursor-grabbing transition-colors"
+        className="absolute top-3 right-2 p-1 text-transparent group-hover:text-muted-foreground/40 hover:!text-muted-foreground cursor-grab active:cursor-grabbing transition-colors"
       >
         <GripVertical size={16} />
       </div>
@@ -84,53 +84,53 @@ export function KanbanCard({ task }: KanbanCardProps) {
           {task.priority}
         </span>
         {task.tags?.slice(0, 2).map((tag) => (
-          <span key={tag} className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/60">
+          <span key={tag} className="px-2 py-0.5 rounded-md bg-muted border border-border text-[10px] text-muted-foreground">
             {tag}
           </span>
         ))}
         {task.tags && task.tags.length > 2 && (
-          <span className="px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-white/40">
+          <span className="px-1.5 py-0.5 rounded-md bg-muted border border-border text-[10px] text-muted-foreground">
             +{task.tags.length - 2}
           </span>
         )}
       </div>
 
       <div>
-        <h4 className="text-sm font-semibold text-white/90 line-clamp-2 leading-snug">
+        <h4 className="text-sm font-semibold text-foreground line-clamp-2 leading-snug">
           {task.title}
         </h4>
         {task.description && (
-          <p className="text-xs text-white/40 mt-1 line-clamp-1">
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
             {task.description}
           </p>
         )}
       </div>
 
-      <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
-        <div className="flex items-center gap-3 text-xs text-white/40">
+      <div className="flex items-center justify-between mt-auto pt-2 border-t border-border">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {task.due_date && (
-            <div className={cn("flex items-center gap-1", isOverdue ? "text-red-400" : "")}>
+            <div className={cn("flex items-center gap-1", isOverdue ? "text-destructive" : "")}>
               <Clock size={12} />
               <span>
                 {new Date(task.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
               </span>
             </div>
           )}
-          <div className="flex items-center gap-1 hover:text-white/70 transition-colors">
+          <div className="flex items-center gap-1 hover:text-foreground transition-colors">
             <MessageSquare size={12} />
           </div>
         </div>
         
         <div>
           {task.assignee ? (
-            <Avatar className="h-6 w-6 ring-1 ring-white/10">
+            <Avatar className="h-6 w-6 ring-1 ring-border">
               <AvatarImage src={task.assignee.avatar || ""} />
-              <AvatarFallback className="bg-primary/20 text-primary text-[9px]">
+              <AvatarFallback className="bg-primary/10 text-primary text-[9px]">
                 {task.assignee.username.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <div className="h-6 w-6 rounded-full border border-dashed border-white/20 flex items-center justify-center text-white/20">
+            <div className="h-6 w-6 rounded-full border border-dashed border-border flex items-center justify-center text-muted-foreground">
               <span className="text-[10px]">+</span>
             </div>
           )}

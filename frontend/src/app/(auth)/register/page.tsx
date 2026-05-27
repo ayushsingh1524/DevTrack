@@ -59,10 +59,10 @@ export default function RegisterPage() {
   return (
     <GlassCard>
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
           Create an account
         </h1>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-muted-foreground">
           Enter your details below to get started
         </p>
       </div>
@@ -74,15 +74,15 @@ export default function RegisterPage() {
             name="username"
             render={({ field }) => (
                <FormItem>
-                <FormLabel className="text-white/80">Username</FormLabel>
+                <FormLabel className="text-foreground/80">Username</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="johndoe"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    className=""
                     {...field}
                   />
                 </FormControl>
-                <FormMessage className="text-red-400" />
+                <FormMessage className="text-destructive" />
               </FormItem>
             )}
           />
@@ -92,11 +92,11 @@ export default function RegisterPage() {
             name="email"
             render={({ field }) => (
                <FormItem>
-                <FormLabel className="text-white/80">Email</FormLabel>
+                <FormLabel className="text-foreground/80">Email</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="you@example.com"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    className=""
                     {...field}
                   />
                 </FormControl>
@@ -110,12 +110,12 @@ export default function RegisterPage() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-white/80">Password</FormLabel>
+                <FormLabel className="text-foreground/80">Password</FormLabel>
                 <FormControl>
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                    className=""
                     {...field}
                   />
                 </FormControl>
@@ -126,7 +126,7 @@ export default function RegisterPage() {
 
           <Button
             type="submit"
-            className="w-full bg-primary hover:bg-primary/90 text-white transition-all"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -137,7 +137,7 @@ export default function RegisterPage() {
         </form>
       </Form>
 
-      <div className="mt-6 text-center text-sm text-white/60">
+      <div className="mt-6 text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link
           href="/login"

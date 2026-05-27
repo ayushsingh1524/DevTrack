@@ -16,8 +16,8 @@ export function GlassCard({ className, children, ...props }: GlassCardProps) {
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 p-8 backdrop-blur-xl shadow-2xl",
-        "before:absolute before:inset-0 before:-z-10 before:rounded-2xl before:bg-gradient-to-b before:from-white/5 before:to-transparent before:p-[1px]",
+        "relative overflow-hidden rounded-2xl border border-border bg-card p-8 shadow-sm theme-transition",
+        "hover:shadow-md",
         className
       )}
       {...(props as any)}
@@ -26,3 +26,4 @@ export function GlassCard({ className, children, ...props }: GlassCardProps) {
     </motion.div>
   );
 }
+

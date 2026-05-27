@@ -31,52 +31,52 @@ export function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-white/5 bg-[#0a0a0c]/80 px-6 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-background/80 px-6 apple-blur theme-transition">
       <div className="flex items-center gap-4 flex-1">
         <div className="relative w-full max-w-md hidden md:flex items-center">
-          <Search className="absolute left-3 text-white/40" size={16} />
+          <Search className="absolute left-3 text-muted-foreground" size={16} />
           <input
             type="text"
             placeholder="Search projects, tasks, notes..."
-            className="h-9 w-full rounded-full border border-white/10 bg-white/5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all"
+            className="h-9 w-full rounded-full border border-border bg-muted pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <button className="relative p-2 text-white/60 hover:text-white transition-colors rounded-full hover:bg-white/5">
+      <div className="flex items-center gap-3">
+        <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-accent">
           <Bell size={18} />
-          <span className="absolute top-1.5 right-2 h-2 w-2 rounded-full bg-primary" />
+          <span className="absolute top-1.5 right-2 h-2 w-2 rounded-full bg-destructive" />
         </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger className="outline-none">
-            <Avatar className="h-8 w-8 cursor-pointer ring-2 ring-transparent hover:ring-primary/50 transition-all">
+            <Avatar className="h-8 w-8 cursor-pointer ring-2 ring-transparent hover:ring-primary/40 transition-all">
               <AvatarImage src={user?.avatar || ""} />
-              <AvatarFallback className="bg-primary/20 text-primary text-xs">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
                 {user?.username?.substring(0, 2).toUpperCase() || "US"}
               </AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-[#111115] border-white/10 text-white shadow-xl">
+          <DropdownMenuContent align="end" className="w-56 bg-popover border-border text-popover-foreground shadow-lg rounded-xl">
             <DropdownMenuGroup>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">{user?.username || "User"}</p>
-                  <p className="text-xs leading-none text-white/50">
+                  <p className="text-sm font-medium leading-none text-foreground">{user?.username || "User"}</p>
+                  <p className="text-xs leading-none text-muted-foreground">
                     {user?.email || "user@example.com"}
                   </p>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/10" />
-              <DropdownMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer">
+              <DropdownMenuSeparator className="bg-border" />
+              <DropdownMenuItem className="focus:bg-accent focus:text-accent-foreground cursor-pointer rounded-lg">
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem className="focus:bg-white/10 focus:text-white cursor-pointer">
+              <DropdownMenuItem onClick={() => router.push("/settings")} className="focus:bg-accent focus:text-accent-foreground cursor-pointer rounded-lg">
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-white/10" />
-              <DropdownMenuItem onClick={handleLogout} className="text-red-400 focus:bg-red-400/10 focus:text-red-400 cursor-pointer">
+              <DropdownMenuSeparator className="bg-border" />
+              <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer rounded-lg">
                 Log out
               </DropdownMenuItem>
             </DropdownMenuGroup>

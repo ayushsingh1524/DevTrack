@@ -1,0 +1,42 @@
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, List
+from datetime import datetime
+from app.schemas.user import UserResponse
+from app.schemas.task import TaskResponse
+
+class ProjectBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    status: str = "active"
+    deadline: Optional[datetime] = None
+
+class ProjectCreate(ProjectBase):
+    pass
+
+class ProjectUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[str] = None
+    deadline: Optional[datetime] = None
+
+class ProjectResponse(ProjectBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+    owner: Optional[UserResponse] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ProjectAnalytics(BaseModel):
+    total_tasks: int
+    completed_tasks: int
+    completion_percentage: int
+    overdue_tasks: int
+    pending_tasks: int
+
+class ProjectDetailResponse(ProjectResponse):
+    tasks: List[TaskResponse] = []
+    analytics: ProjectAnalytics
+
+    model_config = ConfigDict(from_attributes=True)

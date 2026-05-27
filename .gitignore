@@ -1,0 +1,31 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/.pytest_cache/
+backend/alembic/versions/*.py
+!backend/alembic/versions/__init__.py
+backend/*.sqlite3
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.vercel/

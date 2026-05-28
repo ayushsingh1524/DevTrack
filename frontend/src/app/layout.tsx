@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DevTrack",
+  title: "TaskNest",
   description: "Developer productivity dashboard — track tasks, notes, and projects.",
 };
 

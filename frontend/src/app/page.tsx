@@ -22,7 +22,7 @@ export default function Home() {
           <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center">
             <Code2 className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-foreground">DevTrack</span>
+          <span className="text-xl font-bold tracking-tight text-foreground">TaskNest</span>
         </div>
         <div>
           {isAuthenticated ? (
@@ -103,9 +103,9 @@ export default function Home() {
           </div>
         </div>
       </main>
-      
+
       <footer className="mt-auto py-8 text-center text-muted-foreground text-sm relative z-10 border-t border-border">
-        &copy; {new Date().getFullYear()} DevTrack Inc. Built for developers.
+        &copy; {new Date().getFullYear()} TaskNest Inc. Built for developers.
       </footer>
     </div>
   );

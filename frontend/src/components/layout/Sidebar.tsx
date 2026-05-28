@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  CheckSquare, 
-  LineChart, 
-  StickyNote, 
-  GitBranch as Github, 
-  Settings 
+import {
+  LayoutDashboard,
+  FolderKanban,
+  CheckSquare,
+  LineChart,
+  StickyNote,
+  GitBranch as Github,
+  Settings
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -34,10 +34,10 @@ export function Sidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <LayoutDashboard size={16} />
             </div>
-            <span className="font-bold text-lg tracking-tight text-foreground">DevTrack</span>
+            <span className="font-bold text-lg tracking-tight text-foreground">TaskNest</span>
           </Link>
         </div>
-        
+
         <nav className="flex flex-col gap-0.5 px-3 mt-6">
           <p className="px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
             Menu
@@ -50,8 +50,8 @@ export function Sidebar() {
                 href={item.href}
                 className={cn(
                   "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
-                  isActive 
-                    ? "text-primary bg-sidebar-accent" 
+                  isActive
+                    ? "text-primary bg-sidebar-accent"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 )}
               >
@@ -77,8 +77,8 @@ export function Sidebar() {
           href="/settings"
           className={cn(
             "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
-            pathname.startsWith("/settings") 
-              ? "text-primary bg-sidebar-accent" 
+            pathname.startsWith("/settings")
+              ? "text-primary bg-sidebar-accent"
               : "text-muted-foreground hover:text-foreground hover:bg-accent"
           )}
         >

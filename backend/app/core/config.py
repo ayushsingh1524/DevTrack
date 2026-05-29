@@ -41,7 +41,5 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.POSTGRES_USER}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
 settings = Settings()
-# Override DATABASE_URL with computed value if not explicitly set
-if not settings.DATABASE_URL:
-    settings.DATABASE_URL = settings.get_database_url()
-
+# Always run through get_database_url to fix postgres:// → postgresql+asyncpg://
+settings.DATABASE_URL = settings.get_database_url()

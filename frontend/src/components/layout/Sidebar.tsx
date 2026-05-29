@@ -31,8 +31,8 @@ export function Sidebar() {
       <div>
         <div className="flex h-16 items-center px-6 border-b border-border">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <LayoutDashboard size={16} />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full overflow-hidden bg-transparent">
+              <img src="/logo.png" alt="TaskNest Logo" className="w-full h-full object-cover scale-[1.35]" />
             </div>
             <span className="font-bold text-lg tracking-tight text-foreground">TaskNest</span>
           </Link>

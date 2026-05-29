@@ -29,18 +29,12 @@ export default function Home() {
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center text-background group-hover:scale-105 transition-transform">
-              <Code2 className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform bg-transparent">
+              <img src="/logo.png" alt="TaskNest Logo" className="w-full h-full object-cover scale-[1.35]" />
             </div>
             <span className="text-xl font-bold tracking-tight">TaskNest</span>
           </Link>
           
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <Link href="#features" className="hover:text-primary transition-colors">Features</Link>
-            <Link href="#audience" className="hover:text-primary transition-colors">Solutions</Link>
-            <Link href="#analytics" className="hover:text-primary transition-colors">Analytics</Link>
-          </div>
-
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
               <Link
@@ -245,7 +239,9 @@ export default function Home() {
       <footer className="border-t border-border bg-card py-12">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Code2 className="w-5 h-5 text-primary" />
+            <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center bg-transparent">
+              <img src="/logo.png" alt="TaskNest Logo" className="w-full h-full object-cover scale-[1.35]" />
+            </div>
             <span className="font-bold">TaskNest Inc.</span>
           </div>
           <p className="text-muted-foreground text-sm font-medium">

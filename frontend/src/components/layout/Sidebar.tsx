@@ -13,6 +13,7 @@ import {
   Settings
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { LogoLink } from "@/components/ui/logo-link";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -30,12 +31,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-border bg-sidebar flex flex-col justify-between hidden md:flex theme-transition">
       <div>
         <div className="flex h-16 items-center px-6 border-b border-border">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full overflow-hidden bg-transparent">
-              <img src="/logo.png" alt="TaskNest Logo" className="w-full h-full object-cover scale-[1.35]" />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-foreground">TaskNest</span>
-          </Link>
+          <LogoLink textClassName="font-bold text-xl tracking-tight text-foreground" />
         </div>
 
         <nav className="flex flex-col gap-0.5 px-3 mt-6">

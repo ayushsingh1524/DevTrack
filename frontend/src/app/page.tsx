@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Code2, Kanban, LineChart, Notebook, Layers, Zap, Shield, Play } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ArrowRight, Code2, Kanban, LineChart, Notebook, Layers, Zap, Shield, Play, Pause } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { motion } from "framer-motion";
+import { LogoLink } from "@/components/ui/logo-link";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -22,18 +24,37 @@ const staggerContainer = {
 
 export default function Home() {
   const { isAuthenticated } = useAuthStore();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(e => {
+        console.log("Autoplay prevented:", e);
+        setIsPlaying(false);
+      });
+    }
+  }, []);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        videoRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 overflow-hidden">
       {/* Navbar */}
       <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-border/40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform bg-transparent">
-              <img src="/logo.png" alt="TaskNest Logo" className="w-full h-full object-cover scale-[1.35]" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">TaskNest</span>
-          </Link>
+          <LogoLink className="group" textClassName="text-2xl font-bold tracking-tight" />
           
           <div className="flex items-center gap-4">
             {isAuthenticated ? (
@@ -85,16 +106,19 @@ export default function Home() {
             The all-in-one developer platform. Kanban boards, rich notes, and real-time analytics built for high-performance teams.
           </motion.p>
           
-          <motion.div variants={fadeUp} className="w-full max-w-5xl aspect-video rounded-[2rem] bg-card border border-border/50 shadow-2xl overflow-hidden relative flex items-center justify-center group cursor-pointer">
-             <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-fauna-blue)]/20 to-[var(--color-fauna-green)]/20 opacity-50 group-hover:opacity-70 transition-opacity" />
-             <div className="w-20 h-20 rounded-full bg-background/90 backdrop-blur-md flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10">
-                <Play className="w-8 h-8 text-foreground fill-foreground ml-1" />
-             </div>
-             {/* Abstract Code UI representation */}
-             <div className="absolute inset-0 p-8 flex flex-col gap-4 opacity-30 pointer-events-none">
-                <div className="w-1/3 h-8 rounded-lg bg-foreground/10" />
-                <div className="w-1/2 h-8 rounded-lg bg-foreground/10" />
-                <div className="w-2/3 h-8 rounded-lg bg-foreground/10" />
+          <motion.div variants={fadeUp} onClick={togglePlay} className="w-full max-w-5xl aspect-video rounded-[2rem] bg-card border border-border/50 shadow-2xl overflow-hidden relative flex items-center justify-center group cursor-pointer">
+             <video 
+               ref={videoRef}
+               src="https://vjs.zencdn.net/v/oceans.mp4" 
+               autoPlay 
+               loop 
+               muted 
+               playsInline 
+               className="absolute inset-0 w-full h-full object-cover z-0 opacity-80 group-hover:opacity-100 transition-opacity duration-500"
+             />
+             <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-fauna-blue)]/20 to-[var(--color-fauna-green)]/20 opacity-30 z-0 pointer-events-none" />
+             <div className="w-20 h-20 rounded-full bg-background/90 backdrop-blur-md flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform z-10 relative">
+                {isPlaying ? <Pause className="w-8 h-8 text-foreground fill-foreground" /> : <Play className="w-8 h-8 text-foreground fill-foreground ml-1" />}
              </div>
           </motion.div>
         </motion.section>

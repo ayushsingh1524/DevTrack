@@ -34,9 +34,7 @@ services:
       - devtrack_net
 
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/ayushsingh1524/devtrack-backend:latest
     restart: always
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-devtrack}
@@ -63,9 +61,7 @@ services:
       - devtrack_net
 
   celery:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/ayushsingh1524/devtrack-backend:latest
     restart: always
     command: celery -A app.worker.celery_app worker --loglevel=info
     environment:
@@ -86,9 +82,7 @@ services:
       - devtrack_net
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    image: ghcr.io/ayushsingh1524/devtrack-frontend:latest
     restart: always
     environment:
       - NEXT_PUBLIC_API_URL=https://${DOMAIN:-localhost}/api/v1

@@ -23,6 +23,13 @@ class Settings(BaseSettings):
     # REDIS
     REDIS_URL: str = "redis://localhost:6379/0"
     
+    # OAUTH
+    GITHUB_CLIENT_ID: str = ""
+    GITHUB_CLIENT_SECRET: str = ""
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    FRONTEND_URL: str = "http://localhost:3000"
+    
     class Config:
         case_sensitive = True
         env_file = ".env"
@@ -30,16 +37,10 @@ class Settings(BaseSettings):
 
     def get_database_url(self) -> str:
         if self.DATABASE_URL:
-            # Fix for Railway/Heroku injecting postgres:// instead of postgresql+asyncpg://
-            if self.DATABASE_URL.startswith("postgres://"):
-                return self.DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
-            if self.DATABASE_URL.startswith("postgresql://"):
-                return self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
             return self.DATABASE_URL
         if self.POSTGRES_PASSWORD:
             return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         return f"postgresql+asyncpg://{self.POSTGRES_USER}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
 settings = Settings()
-# Always run through get_database_url to fix postgres:// → postgresql+asyncpg://
 settings.DATABASE_URL = settings.get_database_url()

@@ -39,27 +39,6 @@ To enable HTTPS:
 
 ---
 
-## Option 2: Split Deployment (Vercel + Railway/Render)
-For serverless scaling, you can split the frontend and backend.
-
-### Frontend (Vercel)
-1. Import the repository into Vercel.
-2. Set the **Root Directory** to `frontend`.
-3. Vercel will automatically detect Next.js.
-4. Add the following Environment Variables:
-   - `NEXT_PUBLIC_API_URL`: URL to your backend (e.g., `https://api.devtrack.com/api/v1`)
-   - `NEXT_PUBLIC_WS_URL`: WebSocket URL (e.g., `wss://api.devtrack.com/api/v1/ws`)
-5. Click **Deploy**.
-
-### Backend (Railway / Render)
-1. Create a new PostgreSQL database and Redis instance in your provider.
-2. Deploy the `backend/` directory as a web service.
-3. Add your Environment Variables (`DATABASE_URL`, `REDIS_URL`, `SECRET_KEY`, etc.).
-4. Set the Start Command to: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-5. Note: Ensure your provider supports WebSocket connections.
-
----
-
 ## CI/CD GitHub Actions
 The repository includes `.github/workflows/` that automatically trigger on pushes to `main`.
 - `ci.yml`: Lints Python code, validates Node.js builds.

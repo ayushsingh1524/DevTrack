@@ -10,7 +10,9 @@ from app.api import deps
 from app.models.user import User
 from app.models.project import Project
 from app.models.task import Task
+from app.models.github import ProjectGithubRepo
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectDetailResponse
+from app.schemas.github import ProjectGithubRepoCreate, ProjectGithubRepoResponse
 from app.core.redis import redis_client
 
 router = APIRouter()
@@ -102,7 +104,9 @@ async def get_project(
         .options(
             selectinload(Project.owner),
             selectinload(Project.tasks).selectinload(Task.assignee),
-            selectinload(Project.tasks).selectinload(Task.owner)
+            selectinload(Project.tasks).selectinload(Task.owner),
+            selectinload(Project.github_repos),
+            selectinload(Project.github_activities)
         )
         .where(Project.id == project_id)
     )
@@ -200,3 +204,31 @@ async def delete_project(
 
     await invalidate_project_cache(current_user.id)
     return project
+
+@router.post("/{project_id}/github_repos", response_model=ProjectGithubRepoResponse, status_code=status.HTTP_201_CREATED)
+async def link_github_repo(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    project_id: int,
+    repo_in: ProjectGithubRepoCreate,
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """
+    Link a GitHub repository to a project.
+    """
+    query = select(Project).where(Project.id == project_id)
+    result = await db.execute(query)
+    project = result.scalars().first()
+
+    if not project or project.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    repo = ProjectGithubRepo(
+        project_id=project_id,
+        repo_full_name=repo_in.repo_full_name
+    )
+    db.add(repo)
+    await db.commit()
+    await db.refresh(repo)
+
+    return repo

@@ -2,12 +2,18 @@
 
 import React, { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useProjectDetail, useDeleteProject } from "@/hooks/useProjects";
+import { useProjectDetail, useDeleteProject, useLinkGithubRepo } from "@/hooks/useProjects";
 import { ProjectAnalytics } from "@/components/projects/ProjectAnalytics";
+import { ProjectGithubActivity } from "@/components/projects/ProjectGithubActivity";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { ArrowLeft, Edit3, Trash2, Calendar, Loader2 } from "lucide-react";
+import { ArrowLeft, Edit3, Trash2, Calendar, Loader2, LayoutList, KanbanSquare } from "lucide-react";
 import { motion } from "framer-motion";
+import { TaskList } from "@/components/tasks/TaskList";
+import { KanbanBoard } from "@/components/tasks/KanbanBoard";
+import { useUpdateTask } from "@/hooks/useTasks";
+import { useNotes } from "@/hooks/useNotes";
+import { FileText } from "lucide-react";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -16,6 +22,11 @@ export default function ProjectDetailPage() {
 
   const { data: project, isLoading, isError } = useProjectDetail(projectId);
   const deleteProject = useDeleteProject();
+  const updateTask = useUpdateTask();
+  const linkRepo = useLinkGithubRepo();
+  const { data: projectNotes } = useNotes(undefined, projectId);
+
+  const [taskView, setTaskView] = useState<"list" | "kanban">("list");
 
   const handleDelete = () => {
     if (confirm("Are you sure you want to delete this project? Tasks will lose their project association.")) {
@@ -116,36 +127,99 @@ export default function ProjectDetailPage() {
       {/* Analytics Dashboard */}
       <ProjectAnalytics analytics={project.analytics} />
 
-      {/* Recent Tasks List */}
-      <div className="mt-8 space-y-4">
+      {/* GitHub Integration */}
+      <div className="mt-8">
+        <ProjectGithubActivity 
+          repos={project.github_repos || []} 
+          activities={project.github_activities || []} 
+          onAddRepo={(repoFullName) => linkRepo.mutate({ projectId, repoFullName })}
+        />
+      </div>
+
+      {/* Project Tasks */}
+      <div className="mt-8 space-y-4 flex-1 flex flex-col min-h-[400px]">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">Project Tasks</h2>
-          <Button onClick={() => router.push("/tasks")} variant="ghost" className="text-primary hover:text-primary hover:bg-primary/10">
-            View in Kanban
+          
+          <div className="flex items-center bg-white/5 p-1 rounded-lg">
+            <button
+              onClick={() => setTaskView("list")}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                taskView === "list" ? "bg-[#1e1e24] text-white shadow-sm" : "text-white/40 hover:text-white"
+              }`}
+            >
+              <LayoutList size={14} /> List
+            </button>
+            <button
+              onClick={() => setTaskView("kanban")}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                taskView === "kanban" ? "bg-[#1e1e24] text-white shadow-sm" : "text-white/40 hover:text-white"
+              }`}
+            >
+              <KanbanSquare size={14} /> Kanban
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 rounded-xl bg-transparent">
+          {taskView === "list" ? (
+            <TaskList 
+              tasks={project.tasks} 
+              onTaskClick={(id) => router.push(`/tasks/${id}`)} 
+            />
+          ) : (
+            <KanbanBoard 
+              tasks={project.tasks} 
+              onTaskClick={(id) => router.push(`/tasks/${id}`)}
+              onTaskUpdate={(taskId, newStatus) => {
+                updateTask.mutate({ id: taskId, data: { status: newStatus } });
+              }}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Project Notes Section */}
+      <div className="mt-8 space-y-4">
+        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+          <h2 className="text-lg font-semibold text-white">Project Notes</h2>
+          <Button onClick={() => router.push("/notes")} variant="ghost" className="text-primary hover:text-primary hover:bg-primary/10">
+            Open Notebook
           </Button>
         </div>
 
-        <div className="rounded-xl border border-white/5 bg-[#121216] overflow-hidden">
-          {project.tasks.length === 0 ? (
-            <div className="p-8 text-center text-white/40">
-              No tasks assigned to this project yet. Go to Tasks board to create some!
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {!projectNotes || projectNotes.length === 0 ? (
+            <div className="col-span-full p-8 text-center border border-dashed border-white/10 rounded-xl bg-white/[0.02]">
+              <FileText className="mx-auto mb-2 text-white/20" size={24} />
+              <p className="text-white/40 text-sm">No notes attached to this project yet.</p>
+              <Button 
+                variant="link" 
+                onClick={() => router.push("/notes")}
+                className="text-primary mt-2 h-auto p-0"
+              >
+                Create a note
+              </Button>
             </div>
           ) : (
-            <div className="divide-y divide-white/5">
-              {project.tasks.slice(0, 5).map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors">
-                  <div>
-                    <h4 className="text-sm font-medium text-white">{task.title}</h4>
-                    <span className="text-xs text-white/40 capitalize">{task.status.replace("_", " ")}</span>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase ${
-                    task.priority === 'high' || task.priority === 'urgent' ? 'bg-red-500/20 text-red-400' : 'bg-white/10 text-white/60'
-                  }`}>
-                    {task.priority}
-                  </span>
+            projectNotes.map(note => (
+              <div 
+                key={note.id} 
+                onClick={() => router.push("/notes")}
+                className="p-4 rounded-xl border border-white/5 bg-[#121216] hover:bg-white/[0.02] transition-colors cursor-pointer group"
+              >
+                <div className="flex items-start justify-between">
+                  <h3 className="font-medium text-white/90 group-hover:text-primary transition-colors line-clamp-1">{note.title}</h3>
+                  <FileText size={14} className="text-white/20" />
                 </div>
-              ))}
-            </div>
+                <p className="mt-2 text-xs text-white/40 line-clamp-2">
+                  {note.markdown_content || "Empty note"}
+                </p>
+                <div className="mt-3 text-[10px] text-white/30 uppercase font-semibold">
+                  {format(new Date(note.updated_at), "MMM d, yyyy")}
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>

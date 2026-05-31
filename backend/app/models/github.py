@@ -15,3 +15,29 @@ class GithubStat(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     user = relationship("User", backref="github_stat")
+
+
+class ProjectGithubRepo(Base):
+    __tablename__ = "project_github_repos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    repo_full_name = Column(String, nullable=False) # e.g. "ayushsingh1524/DevTrack"
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    project = relationship("Project", backref="github_repos")
+
+
+class GithubActivity(Base):
+    __tablename__ = "github_activities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    activity_type = Column(String, nullable=False) # "commit", "pull_request"
+    ref_id = Column(String, nullable=False) # sha or PR number
+    title = Column(String, nullable=False)
+    author = Column(String, nullable=False)
+    url = Column(String, nullable=False)
+    timestamp = Column(DateTime(timezone=True), nullable=False)
+
+    project = relationship("Project", backref="github_activities")

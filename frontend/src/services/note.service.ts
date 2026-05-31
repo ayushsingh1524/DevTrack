@@ -10,6 +10,7 @@ export interface NoteVersion {
 export interface Note {
   id: number;
   user_id: number;
+  project_id?: number | null;
   title: string;
   markdown_content: string;
   tags: string[];
@@ -25,18 +26,20 @@ export interface CreateNoteDTO {
   title: string;
   markdown_content?: string;
   tags?: string[];
+  project_id?: number | null;
 }
 
 export interface UpdateNoteDTO {
   title?: string;
   markdown_content?: string;
   tags?: string[];
+  project_id?: number | null;
 }
 
 class NoteService {
-  async getNotes(search?: string, skip = 0, limit = 100): Promise<Note[]> {
+  async getNotes(search?: string, project_id?: number, skip = 0, limit = 100): Promise<Note[]> {
     const response = await axiosInstance.get("/notes", {
-      params: { search, skip, limit },
+      params: { search, project_id, skip, limit },
     });
     return response.data;
   }

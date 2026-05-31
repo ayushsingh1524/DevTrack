@@ -8,6 +8,7 @@ class Note(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="SET NULL"), nullable=True, index=True)
     title = Column(String, index=True, nullable=False)
     markdown_content = Column(Text, nullable=True)
     tags = Column(JSON, default=list, nullable=True)
@@ -16,6 +17,7 @@ class Note(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     owner = relationship("User", backref="notes")
+    project = relationship("Project", backref="notes")
     versions = relationship("NoteVersion", back_populates="note", cascade="all, delete-orphan")
 
 

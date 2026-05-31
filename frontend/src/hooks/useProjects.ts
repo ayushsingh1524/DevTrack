@@ -71,3 +71,19 @@ export const useDeleteProject = () => {
     },
   });
 };
+
+export const useLinkGithubRepo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId, repoFullName }: { projectId: number; repoFullName: string }) =>
+      projectService.linkGithubRepo(projectId, repoFullName),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["project", variables.projectId] });
+      toast.success("GitHub repository linked successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.detail || "Failed to link repository");
+    },
+  });
+};

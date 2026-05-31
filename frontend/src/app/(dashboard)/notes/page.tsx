@@ -8,6 +8,7 @@ import { MarkdownPreview } from "@/components/notes/MarkdownPreview";
 import { History, Loader2, Maximize2, Minimize2, FileText } from "lucide-react";
 import { useDebounce } from "use-debounce";
 import { Input } from "@/components/ui/input";
+import { useProjects } from "@/hooks/useProjects";
 
 export default function NotesPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,6 +22,7 @@ export default function NotesPage() {
 
   const { data: notes, isLoading: isLoadingNotes } = useNotes(debouncedSearch);
   const { data: activeNote, isLoading: isLoadingDetail } = useNoteDetail(activeNoteId);
+  const { data: projects } = useProjects();
   const updateNote = useUpdateNote();
 
   // Load content into local state when switching notes
@@ -71,12 +73,27 @@ export default function NotesPage() {
             <>
               {/* Workspace Topbar */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-black/10">
-                <Input
-                  value={localTitle}
-                  onChange={(e) => setLocalTitle(e.target.value)}
-                  className="bg-transparent border-none text-xl font-bold text-white px-0 focus-visible:ring-0 w-1/2 placeholder:text-white/20"
-                  placeholder="Note Title"
-                />
+                <div className="flex items-center gap-3 w-1/2">
+                  <Input
+                    value={localTitle}
+                    onChange={(e) => setLocalTitle(e.target.value)}
+                    className="bg-transparent border-none text-xl font-bold text-white px-0 focus-visible:ring-0 placeholder:text-white/20 min-w-[200px]"
+                    placeholder="Note Title"
+                  />
+                  <select
+                    value={activeNote.project_id || ""}
+                    onChange={(e) => {
+                      const newProjectId = e.target.value ? Number(e.target.value) : null;
+                      updateNote.mutate({ id: activeNote.id, data: { project_id: newProjectId } });
+                    }}
+                    className="bg-white/5 border border-white/10 text-white/60 text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary hover:text-white"
+                  >
+                    <option value="">No Project</option>
+                    {projects?.map(p => (
+                      <option key={p.id} value={p.id} className="bg-[#121216]">{p.title}</option>
+                    ))}
+                  </select>
+                </div>
                 
                 <div className="flex items-center gap-3">
                   <button 

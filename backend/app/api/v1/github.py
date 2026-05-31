@@ -11,10 +11,13 @@ import httpx
 
 from app.api import deps
 from app.models.user import User
-from app.models.github import GithubStat
+from app.models.github import GithubStat, ProjectGithubRepo, GithubActivity
+from app.models.task import Task
 from app.schemas.github import GithubStatusResponse, GithubStatResponse, GithubConnectRequest
 from app.core.redis import redis_client
 from app.core.config import settings
+import re
+from fastapi import Request
 
 router = APIRouter()
 
@@ -189,3 +192,68 @@ async def get_stats(
         await redis_client.redis.setex(cache_key, 3600, json.dumps(response_data))
 
     return response_data
+
+@router.post("/webhook")
+async def github_webhook(request: Request, db: AsyncSession = Depends(deps.get_db)):
+    """
+    Receive GitHub webhook payloads.
+    Parses pushes to extract commits, creates GithubActivity, and auto-updates task status.
+    """
+    event = request.headers.get("x-github-event")
+    
+    if event != "push":
+        # We only care about push events right now
+        return {"status": "ignored", "reason": f"unsupported event type: {event}"}
+        
+    payload = await request.json()
+    repo_full_name = payload.get("repository", {}).get("full_name")
+    commits = payload.get("commits", [])
+    
+    if not repo_full_name or not commits:
+        return {"status": "ignored", "reason": "missing repo or commits"}
+        
+    # Find all projects that have this repo linked
+    query = select(ProjectGithubRepo).where(ProjectGithubRepo.repo_full_name == repo_full_name)
+    result = await db.execute(query)
+    linked_repos = result.scalars().all()
+    
+    if not linked_repos:
+        return {"status": "ignored", "reason": "repo not linked to any project"}
+        
+    task_regex = re.compile(r"Fixes #(\d+)", re.IGNORECASE)
+    
+    for linked_repo in linked_repos:
+        project_id = linked_repo.project_id
+        
+        for commit in commits:
+            # Create GithubActivity
+            activity = GithubActivity(
+                project_id=project_id,
+                activity_type="commit",
+                ref_id=commit.get("id", "")[:7],
+                title=commit.get("message", "No message").split("\n")[0],
+                author=commit.get("author", {}).get("name", "Unknown"),
+                url=commit.get("url", ""),
+                timestamp=datetime.fromisoformat(commit.get("timestamp", datetime.now(timezone.utc).isoformat()).replace("Z", "+00:00"))
+            )
+            db.add(activity)
+            
+            # Parse commit message for "Fixes #123"
+            msg = commit.get("message", "")
+            matches = task_regex.findall(msg)
+            
+            for task_id_str in matches:
+                try:
+                    task_id = int(task_id_str)
+                    # Check if task belongs to this project
+                    task_query = select(Task).where(Task.id == task_id, Task.project_id == project_id)
+                    task_result = await db.execute(task_query)
+                    task = task_result.scalars().first()
+                    
+                    if task and task.status != "completed":
+                        task.status = "completed"
+                except ValueError:
+                    pass
+                    
+    await db.commit()
+    return {"status": "success"}

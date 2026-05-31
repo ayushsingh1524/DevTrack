@@ -4,6 +4,10 @@ import { StatsGrid } from "@/components/dashboard/StatsGrid";
 import { ProductivityChart, LanguageStats } from "@/components/dashboard/ProductivityChart";
 import { StreakCard } from "@/components/dashboard/StreakCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
+import { MyOpenTasks } from "@/components/dashboard/MyOpenTasks";
+import { ActiveProjects } from "@/components/dashboard/ActiveProjects";
+import { RecentNotes } from "@/components/dashboard/RecentNotes";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 import { motion } from "framer-motion";
 
 export default function DashboardPage() {
@@ -14,22 +18,54 @@ export default function DashboardPage() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4 }}
-        className="flex flex-col gap-1.5"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
       >
-        <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]" />
-          <span className="text-xs font-semibold uppercase tracking-wider text-blue-500/80">Developer Insights</span>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-blue-500/80">Command Center</span>
+          </div>
+          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-white via-white to-white/60">
+            Dashboard
+          </h1>
+          <p className="text-sm text-white/40">
+            Welcome back! Review your streaks, tasks, and project insights in one place.
+          </p>
         </div>
-        <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white bg-clip-text bg-gradient-to-r from-white via-white to-white/60">
-          Dashboard
-        </h1>
-        <p className="text-sm text-white/40">
-          Welcome back! Review your streaks, tasks, and project insights in one place.
-        </p>
+
+        {/* Quick Actions */}
+        <QuickActions />
       </motion.div>
 
       {/* Overview Stats (3 cards grid) */}
       <StatsGrid />
+
+      {/* Three-column data widgets */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+        >
+          <MyOpenTasks />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+        >
+          <ActiveProjects />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+        >
+          <RecentNotes />
+        </motion.div>
+      </div>
 
       {/* Main interactive visualization and feed grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

@@ -25,13 +25,14 @@ async def get_notes(
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
     search: Optional[str] = None,
+    project_id: Optional[int] = None,
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
     """
     Retrieve notes for current user.
     """
-    cache_key = f"user:{current_user.id}:notes:list:{search}:{skip}:{limit}"
+    cache_key = f"user:{current_user.id}:notes:list:{search}:{project_id}:{skip}:{limit}"
     
     if redis_client.redis:
         cached_data = await redis_client.redis.get(cache_key)
@@ -40,6 +41,9 @@ async def get_notes(
 
     query = select(Note).where(Note.user_id == current_user.id)
     
+    if project_id is not None:
+        query = query.where(Note.project_id == project_id)
+
     if search:
         query = query.where(
             or_(

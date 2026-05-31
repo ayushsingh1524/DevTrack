@@ -28,6 +28,8 @@ class ProjectResponse(ProjectBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+from app.schemas.github import ProjectGithubRepoResponse, GithubActivityResponse
+
 class ProjectAnalytics(BaseModel):
     total_tasks: int
     completed_tasks: int
@@ -37,6 +39,8 @@ class ProjectAnalytics(BaseModel):
 
 class ProjectDetailResponse(ProjectResponse):
     tasks: List[TaskResponse] = []
+    github_repos: List[ProjectGithubRepoResponse] = []
+    github_activities: List[GithubActivityResponse] = []
     analytics: ProjectAnalytics
 
     model_config = ConfigDict(from_attributes=True)

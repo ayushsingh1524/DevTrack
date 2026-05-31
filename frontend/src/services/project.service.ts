@@ -15,16 +15,36 @@ export interface Project {
 }
 
 export interface ProjectAnalytics {
-  total_tasks: int;
-  completed_tasks: int;
-  completion_percentage: int;
-  overdue_tasks: int;
-  pending_tasks: int;
+  total_tasks: number;
+  completed_tasks: number;
+  completion_percentage: number;
+  overdue_tasks: number;
+  pending_tasks: number;
+}
+
+export interface ProjectGithubRepo {
+  id: number;
+  project_id: number;
+  repo_full_name: string;
+  created_at: string;
+}
+
+export interface GithubActivity {
+  id: number;
+  project_id: number;
+  activity_type: string;
+  ref_id: string;
+  title: string;
+  author: string;
+  url: string;
+  timestamp: string;
 }
 
 export interface ProjectDetail extends Project {
   tasks: Task[];
   analytics: ProjectAnalytics;
+  github_repos: ProjectGithubRepo[];
+  github_activities: GithubActivity[];
 }
 
 export interface CreateProjectDTO {
@@ -66,6 +86,13 @@ class ProjectService {
 
   async deleteProject(id: number): Promise<Project> {
     const response = await axiosInstance.delete(`/projects/${id}`);
+    return response.data;
+  }
+
+  async linkGithubRepo(projectId: number, repoFullName: string): Promise<ProjectGithubRepo> {
+    const response = await axiosInstance.post(`/projects/${projectId}/github_repos`, {
+      repo_full_name: repoFullName,
+    });
     return response.data;
   }
 }

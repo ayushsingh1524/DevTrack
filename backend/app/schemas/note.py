@@ -16,6 +16,7 @@ class NoteBase(BaseModel):
     title: str
     markdown_content: Optional[str] = ""
     tags: Optional[List[str]] = []
+    project_id: Optional[int] = None
 
 class NoteCreate(NoteBase):
     pass
@@ -24,6 +25,7 @@ class NoteUpdate(BaseModel):
     title: Optional[str] = None
     markdown_content: Optional[str] = None
     tags: Optional[List[str]] = None
+    project_id: Optional[int] = None
 
 class NoteResponse(NoteBase):
     id: int

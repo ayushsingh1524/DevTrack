@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { noteService, CreateNoteDTO, UpdateNoteDTO, Note, NoteDetail } from "@/services/note.service";
 import { toast } from "sonner";
 
-export const useNotes = (search?: string, skip = 0, limit = 100) => {
+export const useNotes = (search?: string, project_id?: number, skip = 0, limit = 100) => {
   return useQuery({
-    queryKey: ["notes", { search, skip, limit }],
-    queryFn: () => noteService.getNotes(search, skip, limit),
+    queryKey: ["notes", { search, project_id, skip, limit }],
+    queryFn: () => noteService.getNotes(search, project_id, skip, limit),
   });
 };
 
@@ -41,11 +41,8 @@ export const useUpdateNote = () => {
     mutationFn: ({ id, data }: { id: number; data: UpdateNoteDTO }) =>
       noteService.updateNote(id, data),
     onSuccess: (updatedNote) => {
-      // Optimistically update list
-      queryClient.setQueryData<Note[]>(["notes", { search: undefined, skip: 0, limit: 100 }], (old) => {
-        if (!old) return old;
-        return old.map((n) => (n.id === updatedNote.id ? updatedNote : n));
-      });
+      // Invalidate all notes lists
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
       // Invalidate detail to refetch new versions if needed
       queryClient.invalidateQueries({ queryKey: ["note", updatedNote.id] });
     },
@@ -60,11 +57,8 @@ export const useDeleteNote = () => {
 
   return useMutation({
     mutationFn: (id: number) => noteService.deleteNote(id),
-    onSuccess: (_, deletedId) => {
-      queryClient.setQueryData<Note[]>(["notes", { search: undefined, skip: 0, limit: 100 }], (old) => {
-        if (!old) return old;
-        return old.filter((n) => n.id !== deletedId);
-      });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
       toast.success("Note deleted");
     },
     onError: () => {

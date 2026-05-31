@@ -81,7 +81,7 @@ async def get_tasks(
     tasks = result.scalars().all()
     
     # Serialize tasks to JSON-compatible list
-    response_data = [TaskResponse.from_attributes(t).model_dump(mode="json") for t in tasks]
+    response_data = [TaskResponse.model_validate(t).model_dump(mode="json") for t in tasks]
     
     try:
         await redis_client.set(cache_key, json.dumps(response_data), ex=30)  # cache for 30s

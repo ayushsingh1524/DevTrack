@@ -15,10 +15,13 @@ router = APIRouter()
 
 async def invalidate_note_cache(user_id: int):
     """Helper to invalidate Redis cache for notes."""
-    if redis_client.redis:
-        keys = await redis_client.redis.keys(f"user:{user_id}:notes:*")
-        if keys:
-            await redis_client.redis.delete(*keys)
+    try:
+        if redis_client.redis:
+            keys = await redis_client.redis.keys(f"user:{user_id}:notes:*")
+            if keys:
+                await redis_client.redis.delete(*keys)
+    except Exception as e:
+        print(f"Failed to invalidate note cache: {e}")
 
 @router.get("/", response_model=List[NoteResponse])
 async def get_notes(

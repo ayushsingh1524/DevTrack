@@ -22,8 +22,8 @@ class GithubService {
     return response.data;
   }
 
-  async connect(): Promise<{ status: string; message: string }> {
-    const response = await axiosInstance.post("/github/connect");
+  async connect(token: string): Promise<{ status: string; message: string }> {
+    const response = await axiosInstance.post("/github/connect", { token });
     return response.data;
   }
 

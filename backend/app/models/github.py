@@ -25,7 +25,7 @@ class ProjectGithubRepo(Base):
     repo_full_name = Column(String, nullable=False) # e.g. "ayushsingh1524/DevTrack"
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    project = relationship("Project", backref="github_repos")
+    project = relationship("Project", back_populates="github_repos")
 
 
 class GithubActivity(Base):
@@ -40,4 +40,4 @@ class GithubActivity(Base):
     url = Column(String, nullable=False)
     timestamp = Column(DateTime(timezone=True), nullable=False)
 
-    project = relationship("Project", backref="github_activities")
+    project = relationship("Project", back_populates="github_activities")

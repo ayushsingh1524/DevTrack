@@ -51,9 +51,49 @@ async def sync_github_data(user_id: int, access_token: str, db: AsyncSession):
             for i, lang in enumerate(languages):
                 top_langs[lang] = get_mock_random(user_id, 4+i, 5, 40)
         else:
-            # Real Github API logic would go here
-            # using httpx.AsyncClient() with Auth bearer
-            pass
+            # Real Github API logic
+            async with httpx.AsyncClient() as client:
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github.v3+json"
+                }
+                
+                # Fetch repos
+                repos_resp = await client.get("https://api.github.com/user/repos?per_page=100&affiliation=owner,collaborator", headers=headers)
+                if repos_resp.status_code == 200:
+                    repos_data = repos_resp.json()
+                    repos = len(repos_data)
+                    
+                    # Aggregate languages from top 10 recently updated repos
+                    sorted_repos = sorted(repos_data, key=lambda x: x.get('updated_at', ''), reverse=True)[:10]
+                    lang_freq = {}
+                    for r in sorted_repos:
+                        lang = r.get("language")
+                        if lang:
+                            lang_freq[lang] = lang_freq.get(lang, 0) + 1
+                            
+                    # Calculate percentage (approximate)
+                    total_lang_repos = sum(lang_freq.values())
+                    if total_lang_repos > 0:
+                        for l, c in lang_freq.items():
+                            top_langs[l] = int((c / total_lang_repos) * 100)
+                            
+                # For commits and PRs, we can use search API (approximate for user)
+                # Fetching total commits authored by user
+                user_resp = await client.get("https://api.github.com/user", headers=headers)
+                username = user_resp.json().get("login", "")
+                
+                if username:
+                    # NOTE: search/commits is sometimes preview or requires specific headers.
+                    # As an alternative, let's just fetch events for the user to count recent commits and PRs
+                    events_resp = await client.get(f"https://api.github.com/users/{username}/events?per_page=100", headers=headers)
+                    if events_resp.status_code == 200:
+                        events = events_resp.json()
+                        for ev in events:
+                            if ev["type"] == "PushEvent":
+                                commits += len(ev.get("payload", {}).get("commits", []))
+                            elif ev["type"] == "PullRequestEvent":
+                                prs += 1
             
         # Update Database
         query = select(GithubStat).where(GithubStat.user_id == user_id)
@@ -99,21 +139,34 @@ async def get_status(
 @router.post("/connect")
 async def connect_github(
     *,
+    payload: GithubConnectRequest,
     db: AsyncSession = Depends(deps.get_db),
     background_tasks: BackgroundTasks,
     current_user: User = Depends(deps.get_current_user)
 ) -> Any:
     """
-    Initiates connection. In a real app, this exchanges an OAuth code.
-    Here, we simulate successful connection for demonstration.
+    Connects GitHub account using PAT.
     """
-    # Mocking successful OAuth response
-    current_user.github_access_token = "mock_token"
-    current_user.github_username = f"developer_{current_user.id}"
+    if not payload.token:
+        raise HTTPException(status_code=400, detail="Token is required")
+        
+    # Verify token and get username
+    async with httpx.AsyncClient() as client:
+        resp = await client.get("https://api.github.com/user", headers={
+            "Authorization": f"Bearer {payload.token}",
+            "Accept": "application/vnd.github.v3+json"
+        })
+        if resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Invalid GitHub Token")
+            
+        username = resp.json().get("login")
+
+    current_user.github_access_token = payload.token
+    current_user.github_username = username
     await db.commit()
     
     # Trigger initial sync
-    background_tasks.add_task(sync_github_data, current_user.id, "mock_token", db)
+    background_tasks.add_task(sync_github_data, current_user.id, payload.token, db)
     
     return {"status": "success", "message": "Connected to GitHub"}
 

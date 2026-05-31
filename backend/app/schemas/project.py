@@ -41,6 +41,6 @@ class ProjectDetailResponse(ProjectResponse):
     tasks: List[TaskResponse] = []
     github_repos: List[ProjectGithubRepoResponse] = []
     github_activities: List[GithubActivityResponse] = []
-    analytics: ProjectAnalytics
+    analytics: Optional[ProjectAnalytics] = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -19,10 +19,13 @@ router = APIRouter()
 
 async def invalidate_project_cache(user_id: int):
     """Helper to invalidate Redis cache for project lists."""
-    if redis_client.redis:
-        keys = await redis_client.redis.keys(f"user:{user_id}:projects:*")
-        if keys:
-            await redis_client.redis.delete(*keys)
+    try:
+        if redis_client.redis:
+            keys = await redis_client.redis.keys(f"user:{user_id}:projects:*")
+            if keys:
+                await redis_client.redis.delete(*keys)
+    except Exception as e:
+        print(f"Failed to invalidate project cache: {e}")
 
 @router.get("", response_model=List[ProjectResponse])
 async def get_projects(

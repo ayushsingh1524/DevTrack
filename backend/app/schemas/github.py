@@ -16,7 +16,7 @@ class GithubStatResponse(GithubStatBase):
     model_config = ConfigDict(from_attributes=True)
 
 class GithubConnectRequest(BaseModel):
-    code: str
+    token: str
 
 class GithubStatusResponse(BaseModel):
     is_connected: bool

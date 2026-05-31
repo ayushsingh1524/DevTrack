@@ -23,6 +23,8 @@ export default function GithubPage() {
   const isSyncing = stats?.commits === 0 && !!stats; // We set commits=0 temporarily during sync
   const isInitialLoading = statusLoading || (status?.is_connected && statsLoading);
 
+  const [token, setToken] = React.useState("");
+
   if (isInitialLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -41,23 +43,35 @@ export default function GithubPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative z-10 flex flex-col items-center max-w-md text-center p-8"
+          className="relative z-10 flex flex-col items-center w-full max-w-md text-center p-8"
         >
           <div className="h-20 w-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-2xl border border-white/10">
             <Github size={40} className="text-white" />
           </div>
           <h1 className="text-3xl font-extrabold text-white mb-4 tracking-tight">Connect to GitHub</h1>
-          <p className="text-white/60 mb-8 leading-relaxed">
-            Link your GitHub account to automatically track your commits, pull requests, and analyze your most used languages.
+          <p className="text-white/60 mb-6 leading-relaxed">
+            Link your GitHub account using a Personal Access Token (PAT) to automatically track your commits, pull requests, and analyze your most used languages.
           </p>
-          <Button 
-            onClick={() => connect.mutate()}
-            disabled={connect.isPending}
-            className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-semibold shadow-lg transition-all h-12"
-          >
-            {connect.isPending ? <Loader2 size={18} className="animate-spin mr-2" /> : <Github size={18} className="mr-2" />}
-            Connect GitHub Account
-          </Button>
+          <div className="w-full flex flex-col gap-3">
+            <input 
+              type="password"
+              placeholder="ghp_xxxxxxxxxxxx"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              className="w-full bg-[#010409] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+            />
+            <Button 
+              onClick={() => connect.mutate(token)}
+              disabled={connect.isPending || !token}
+              className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-semibold shadow-lg transition-all h-12"
+            >
+              {connect.isPending ? <Loader2 size={18} className="animate-spin mr-2" /> : <Github size={18} className="mr-2" />}
+              Connect GitHub Account
+            </Button>
+          </div>
+          <p className="text-xs text-white/40 mt-4 text-left w-full">
+            * Needs <span className="text-white/70 bg-white/10 px-1 rounded">repo</span> and <span className="text-white/70 bg-white/10 px-1 rounded">read:user</span> scopes.
+          </p>
         </motion.div>
       </div>
     );

@@ -21,3 +21,5 @@ class Project(Base):
     # Relationships
     owner = relationship("User", back_populates="projects")
     tasks = relationship("Task", back_populates="project")
+    github_repos = relationship("ProjectGithubRepo", back_populates="project")
+    github_activities = relationship("GithubActivity", back_populates="project")

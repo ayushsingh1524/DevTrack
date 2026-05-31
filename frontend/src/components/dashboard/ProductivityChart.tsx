@@ -162,15 +162,15 @@ export function LanguageStats() {
           </div>
         ) : (
           <>
-            <div className="w-full md:w-1/2 h-full flex items-center justify-center">
+            <div className="w-full md:w-[45%] h-[200px] md:h-full flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={languageData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={65}
-                    outerRadius={85}
+                    innerRadius={50}
+                    outerRadius={70}
                     paddingAngle={6}
                     dataKey="value"
                   >
@@ -196,7 +196,7 @@ export function LanguageStats() {
               </ResponsiveContainer>
             </div>
             
-            <div className="w-full md:w-1/2 flex flex-col justify-center gap-4">
+            <div className="w-full md:w-[55%] flex flex-col justify-center gap-4">
               {languageData.map((entry: any, index: number) => (
                 <div key={entry.name} className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between">

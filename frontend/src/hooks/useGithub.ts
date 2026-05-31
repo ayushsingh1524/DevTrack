@@ -27,7 +27,7 @@ export const useGithubStats = (enabled: boolean) => {
 export const useConnectGithub = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => githubService.connect(),
+    mutationFn: (token: string) => githubService.connect(token),
     onSuccess: () => {
       toast.success("Successfully connected to GitHub!");
       queryClient.invalidateQueries({ queryKey: ["github"] });

@@ -3,29 +3,53 @@
 import React, { useMemo } from "react";
 import { useAnalyticsStreaks } from "@/hooks/useAnalytics";
 import { Loader2 } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, getDay } from "date-fns";
 import { motion } from "framer-motion";
+
+const DAY_LABELS = ["Sun", "", "Tue", "", "Thu", "", "Sat"];
 
 export function ActivityHeatmap() {
   const { data, isLoading, isError } = useAnalyticsStreaks();
 
-  const columns = useMemo(() => {
-    if (!data || !data.heatmap) return [];
-    
-    const cols: any[][] = [];
-    let currentWeek: any[] = [];
-    
-    // Sort chronologically just in case
-    const sorted = [...data.heatmap].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
-    sorted.forEach((day, i) => {
-      currentWeek.push(day);
-      if (currentWeek.length === 7 || i === sorted.length - 1) {
-        cols.push(currentWeek);
-        currentWeek = [];
+  // Build a proper 7-row (Sun-Sat) x N-column (weeks) grid
+  const { weeks, monthLabels } = useMemo(() => {
+    if (!data || !data.heatmap || data.heatmap.length === 0)
+      return { weeks: [], monthLabels: [] };
+
+    const sorted = [...data.heatmap].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    // Pad the start so the first column begins on Sunday
+    const firstDayOfWeek = getDay(parseISO(sorted[0].date)); // 0=Sun
+    const padded: (typeof sorted[0] | null)[] = Array(firstDayOfWeek).fill(null);
+    padded.push(...sorted);
+
+    // Build columns (each column = 1 week, 7 rows)
+    const cols: (typeof sorted[0] | null)[][] = [];
+    for (let i = 0; i < padded.length; i += 7) {
+      const week = padded.slice(i, i + 7);
+      // Pad the last week if it has fewer than 7 days
+      while (week.length < 7) week.push(null);
+      cols.push(week);
+    }
+
+    // Generate month labels for the top axis
+    const labels: { text: string; col: number }[] = [];
+    let lastMonth = -1;
+    cols.forEach((week, colIdx) => {
+      const firstReal = week.find((d) => d !== null);
+      if (firstReal) {
+        const dt = parseISO(firstReal.date);
+        const month = dt.getMonth();
+        if (month !== lastMonth) {
+          labels.push({ text: format(dt, "MMM"), col: colIdx });
+          lastMonth = month;
+        }
       }
     });
-    return cols;
+
+    return { weeks: cols, monthLabels: labels };
   }, [data]);
 
   if (isLoading) {
@@ -44,59 +68,108 @@ export function ActivityHeatmap() {
     );
   }
 
-  const getIntensityColor = (commits: number) => {
-    if (commits === 0) return "bg-white/[0.03] border-white/5";
-    if (commits === 1) return "bg-primary/20 border-primary/30";
-    if (commits === 2) return "bg-primary/40 border-primary/50";
-    if (commits === 3) return "bg-primary/60 border-primary/70";
-    if (commits >= 4) return "bg-primary border-primary shadow-[0_0_10px_rgba(59,130,246,0.6)]";
-    return "bg-white/[0.03] border-white/5";
+  const getIntensityColor = (commits: number, tasks: number) => {
+    const total = commits + tasks;
+    if (total === 0) return "bg-white/[0.04]";
+    if (total <= 1) return "bg-emerald-800/60";
+    if (total <= 3) return "bg-emerald-600/70";
+    if (total <= 5) return "bg-emerald-500/80";
+    return "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.4)]";
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col h-[220px] rounded-2xl border border-white/5 bg-[#121216] p-6 shadow-lg"
+      className="flex flex-col rounded-2xl border border-white/5 bg-[#121216] p-5 shadow-lg"
     >
+      {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-white/90">Contribution Activity</h2>
-          <p className="text-sm text-white/40 mt-1">90 days of commits and task completions</p>
+          <p className="text-xs text-white/40 mt-0.5">
+            {data.heatmap.length} days of commits &amp; tasks
+          </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-white/40">
+        <div className="flex items-center gap-1.5 text-[10px] text-white/40">
           <span>Less</span>
-          <div className="flex gap-1">
-            <div className="w-3 h-3 rounded-sm bg-white/[0.03] border border-white/5" />
-            <div className="w-3 h-3 rounded-sm bg-primary/20 border border-primary/30" />
-            <div className="w-3 h-3 rounded-sm bg-primary/40 border border-primary/50" />
-            <div className="w-3 h-3 rounded-sm bg-primary/60 border border-primary/70" />
-            <div className="w-3 h-3 rounded-sm bg-primary border border-primary" />
+          <div className="flex gap-[3px]">
+            <div className="w-[11px] h-[11px] rounded-[2px] bg-white/[0.04]" />
+            <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-800/60" />
+            <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-600/70" />
+            <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-500/80" />
+            <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-400" />
           </div>
           <span>More</span>
         </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center overflow-x-auto overflow-y-hidden custom-scrollbar pb-2 -mx-2 px-2">
-        <div className="flex gap-1.5 h-[105px]">
-          {columns.map((week, weekIdx) => (
-            <div key={weekIdx} className="flex flex-col gap-1.5 justify-end h-full">
-              {week.map((day, dayIdx) => (
-                <div
-                  key={day.date}
-                  className={`group relative w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-[3px] border transition-all duration-300 hover:scale-125 hover:z-10 cursor-pointer ${getIntensityColor(day.commits)}`}
+      {/* Heatmap Grid */}
+      <div className="flex-1 overflow-x-auto custom-scrollbar pb-1">
+        <div className="flex gap-0">
+          {/* Day-of-week labels column */}
+          <div className="flex flex-col gap-[3px] pr-2 shrink-0 pt-[18px]">
+            {DAY_LABELS.map((label, i) => (
+              <div
+                key={i}
+                className="h-[11px] flex items-center text-[9px] text-white/30 leading-none select-none"
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+
+          {/* Weeks columns */}
+          <div className="flex flex-col">
+            {/* Month labels row */}
+            <div className="flex h-[15px] mb-[3px] relative" style={{ width: weeks.length * 14 }}>
+              {monthLabels.map((m, i) => (
+                <span
+                  key={i}
+                  className="absolute text-[9px] text-white/35 select-none"
+                  style={{ left: m.col * 14 }}
                 >
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20">
-                    <div className="bg-[#0a0a0c] border border-white/10 rounded-lg px-3 py-2 text-xs shadow-xl flex flex-col items-center">
-                      <span className="font-semibold text-white/90 mb-1">{format(parseISO(day.date), "MMM d, yyyy")}</span>
-                      <span className="text-white/60">{day.commits} Commits • {day.tasks_completed} Tasks</span>
-                    </div>
-                  </div>
+                  {m.text}
+                </span>
+              ))}
+            </div>
+
+            {/* Grid of cells */}
+            <div className="flex gap-[3px]">
+              {weeks.map((week, weekIdx) => (
+                <div key={weekIdx} className="flex flex-col gap-[3px]">
+                  {week.map((day, dayIdx) => {
+                    if (!day) {
+                      return (
+                        <div
+                          key={`empty-${weekIdx}-${dayIdx}`}
+                          className="w-[11px] h-[11px] rounded-[2px]"
+                        />
+                      );
+                    }
+                    return (
+                      <div
+                        key={day.date}
+                        className={`group relative w-[11px] h-[11px] rounded-[2px] transition-all duration-200 hover:scale-[1.6] hover:z-10 cursor-pointer ${getIntensityColor(day.commits, day.tasks_completed)}`}
+                      >
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
+                          <div className="bg-[#0a0a0c] border border-white/10 rounded-lg px-3 py-2 text-xs shadow-xl flex flex-col items-center">
+                            <span className="font-semibold text-white/90 mb-0.5">
+                              {format(parseISO(day.date), "MMM d, yyyy")}
+                            </span>
+                            <span className="text-white/60">
+                              {day.commits} commits &bull; {day.tasks_completed} tasks
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </motion.div>

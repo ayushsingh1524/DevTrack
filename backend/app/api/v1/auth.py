@@ -172,7 +172,7 @@ async def github_login():
         raise HTTPException(status_code=500, detail="GitHub Client ID not configured")
     
     # Redirect to GitHub authorization page
-    url = f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&scope=read:user user:email"
+    url = f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&scope=read:user user:email&prompt=consent"
     return RedirectResponse(url)
 
 
@@ -277,7 +277,7 @@ async def google_login(request: Request):
         
     # Redirect to Google authorization page
     redirect_uri = f"{settings.FRONTEND_URL}/api/v1/auth/google/callback"
-    url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={settings.GOOGLE_CLIENT_ID}&response_type=code&scope=openid email profile&redirect_uri={redirect_uri}"
+    url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={settings.GOOGLE_CLIENT_ID}&response_type=code&scope=openid email profile&redirect_uri={redirect_uri}&prompt=select_account"
     return RedirectResponse(url)
 
 

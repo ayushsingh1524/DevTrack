@@ -118,10 +118,15 @@ async def forgot_password(
         # Don't reveal if user exists or not for security
         return {"message": "If an account exists, a password reset link has been sent."}
     
-    # In a real app, generate a reset token and send email
-    # For now, we will just print to console
     reset_token = security.create_access_token(subject=user.id, expires_delta=security.timedelta(hours=1))
-    print(f"PASSWORD RESET TOKEN FOR {user.email}: {reset_token}")
+    
+    # Send the reset email
+    try:
+        from app.core.email import send_reset_password_email
+        await send_reset_password_email(user.email, reset_token)
+    except Exception as e:
+        print(f"Failed to send reset email: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send reset email. Please try again later.")
     
     return {"message": "If an account exists, a password reset link has been sent."}
 

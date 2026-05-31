@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import { GlassCard } from "@/components/ui/glass-card";
@@ -39,12 +39,12 @@ export default function ForgotPasswordPage() {
   async function onSubmit(values: z.infer<typeof forgotPasswordSchema>) {
     setIsLoading(true);
     try {
-      await authService.forgotPassword(values);
+      await authService.forgotPassword({ email: values.email });
       setIsSubmitted(true);
-      toast.success("Password reset email sent!");
+      toast.success("Reset link sent! Check your email.");
     } catch (error: any) {
       toast.error(
-        error.response?.data?.detail || "Something went wrong. Please try again."
+        error.response?.data?.detail || "Failed to send reset email. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -53,18 +53,36 @@ export default function ForgotPasswordPage() {
 
   if (isSubmitted) {
     return (
-      <GlassCard className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-white mb-4">
-          Check your email
-        </h1>
-        <p className="text-sm text-white/60 mb-6">
-          If an account exists for that email, we have sent password reset instructions.
-        </p>
-        <Link href="/login" className="block w-full">
-          <Button className="w-full bg-primary hover:bg-primary/90 text-white">
-            Return to Login
-          </Button>
-        </Link>
+      <GlassCard>
+        <div className="text-center py-4">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+            <Mail className="h-8 w-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
+            Check your email
+          </h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            We&apos;ve sent a password reset link to your email address. Click the link in the email to reset your password.
+          </p>
+          <p className="text-xs text-muted-foreground mb-6">
+            Didn&apos;t receive the email? Check your spam folder or try again.
+          </p>
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setIsSubmitted(false)}
+            >
+              Try another email
+            </Button>
+            <Link href="/login">
+              <Button variant="ghost" className="w-full">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to login
+              </Button>
+            </Link>
+          </div>
+        </div>
       </GlassCard>
     );
   }
@@ -72,11 +90,11 @@ export default function ForgotPasswordPage() {
   return (
     <GlassCard>
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-white mb-2">
-          Reset password
+        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">
+          Forgot password?
         </h1>
-        <p className="text-sm text-white/60">
-          Enter your email and we will send you a reset link
+        <p className="text-sm text-muted-foreground">
+          Enter your email and we&apos;ll send you a reset link
         </p>
       </div>
 
@@ -86,23 +104,22 @@ export default function ForgotPasswordPage() {
             control={form.control}
             name="email"
             render={({ field }) => (
-               <FormItem>
-                <FormLabel className="text-white/80">Email</FormLabel>
+              <FormItem>
+                <FormLabel className="text-foreground/80">Email</FormLabel>
                 <FormControl>
                   <Input
                     placeholder="you@example.com"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
                     {...field}
                   />
                 </FormControl>
-                <FormMessage className="text-red-400" />
+                <FormMessage className="text-destructive" />
               </FormItem>
             )}
           />
 
           <Button
             type="submit"
-            className="w-full bg-primary hover:bg-primary/90 text-white transition-all"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-all"
             disabled={isLoading}
           >
             {isLoading ? (
@@ -113,12 +130,13 @@ export default function ForgotPasswordPage() {
         </form>
       </Form>
 
-      <div className="mt-6 text-center text-sm">
+      <div className="mt-6 text-center">
         <Link
           href="/login"
-          className="text-white/60 hover:text-white font-medium transition-colors"
+          className="text-sm text-primary hover:text-primary/80 font-medium transition-colors inline-flex items-center"
         >
-          &larr; Back to login
+          <ArrowLeft className="mr-1 h-3 w-3" />
+          Back to login
         </Link>
       </div>
     </GlassCard>

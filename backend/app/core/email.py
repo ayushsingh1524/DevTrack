@@ -56,8 +56,8 @@ If you didn't request this, you can safely ignore this email.
     await aiosmtplib.send(
         msg,
         hostname=settings.SMTP_HOST,
-        port=settings.SMTP_PORT,
-        start_tls=True,
+        port=465,
+        use_tls=True,
         username=settings.SMTP_USER,
         password=settings.SMTP_PASSWORD,
     )

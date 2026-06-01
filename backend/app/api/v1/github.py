@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import httpx
+from app.db.session import AsyncSessionLocal
 
 from app.api import deps
 from app.models.user import User
@@ -26,7 +27,7 @@ def get_mock_random(seed: int, index: int, min_val: int, max_val: int) -> int:
     random.seed(seed + index)
     return random.randint(min_val, max_val)
 
-async def sync_github_data(user_id: int, access_token: str, db: AsyncSession):
+async def sync_github_data(user_id: int, access_token: str):
     """
     Background task to sync Github data.
     If real access_token is 'mock_token', generates deterministic mock data.
@@ -96,21 +97,22 @@ async def sync_github_data(user_id: int, access_token: str, db: AsyncSession):
                                 prs += 1
             
         # Update Database
-        query = select(GithubStat).where(GithubStat.user_id == user_id)
-        result = await db.execute(query)
-        stat = result.scalars().first()
+        async with AsyncSessionLocal() as db:
+            query = select(GithubStat).where(GithubStat.user_id == user_id)
+            result = await db.execute(query)
+            stat = result.scalars().first()
 
-        if not stat:
-            stat = GithubStat(user_id=user_id)
-            db.add(stat)
-            
-        stat.commits = commits
-        stat.repositories = repos
-        stat.pull_requests = prs
-        stat.top_languages = top_langs
-        stat.updated_at = datetime.now(timezone.utc)
+            if not stat:
+                stat = GithubStat(user_id=user_id)
+                db.add(stat)
+                
+            stat.commits = commits
+            stat.repositories = repos
+            stat.pull_requests = prs
+            stat.top_languages = top_langs
+            stat.updated_at = datetime.now(timezone.utc)
 
-        await db.commit()
+            await db.commit()
         
         # Invalidate cache
         if redis_client.redis:
@@ -166,7 +168,7 @@ async def connect_github(
     await db.commit()
     
     # Trigger initial sync
-    background_tasks.add_task(sync_github_data, current_user.id, payload.token, db)
+    background_tasks.add_task(sync_github_data, current_user.id, payload.token)
     
     return {"status": "success", "message": "Connected to GitHub"}
 
@@ -205,7 +207,7 @@ async def trigger_sync(
     if not current_user.github_access_token:
         raise HTTPException(status_code=400, detail="GitHub not connected")
         
-    background_tasks.add_task(sync_github_data, current_user.id, current_user.github_access_token, db)
+    background_tasks.add_task(sync_github_data, current_user.id, current_user.github_access_token)
     return {"status": "sync_started"}
 
 @router.get("/stats", response_model=GithubStatResponse)

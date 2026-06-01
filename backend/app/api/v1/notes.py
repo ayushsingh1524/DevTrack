@@ -23,7 +23,7 @@ async def invalidate_note_cache(user_id: int):
     except Exception as e:
         print(f"Failed to invalidate note cache: {e}")
 
-@router.get("/", response_model=List[NoteResponse])
+@router.get("", response_model=List[NoteResponse])
 async def get_notes(
     db: AsyncSession = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
@@ -65,7 +65,7 @@ async def get_notes(
 
     return response_data
 
-@router.post("/", response_model=NoteResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=NoteResponse, status_code=status.HTTP_201_CREATED)
 async def create_note(
     *,
     db: AsyncSession = Depends(deps.get_db),

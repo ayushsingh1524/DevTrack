@@ -15,8 +15,8 @@ export const useGithubStats = (enabled: boolean) => {
     queryFn: () => githubService.getStats(),
     enabled,
     refetchInterval: (query) => {
-      // If we have stats but commits is 0, it means sync is probably still running, poll every 2s
-      if (query.state.data && query.state.data.commits === 0) {
+      // If we have stats but id is 0, it means sync is probably still running, poll every 2s
+      if (query.state.data && query.state.data.id === 0) {
         return 2000;
       }
       return false; // otherwise don't poll
@@ -58,8 +58,8 @@ export const useSyncGithub = () => {
     mutationFn: () => githubService.sync(),
     onSuccess: () => {
       toast.info("Background sync started...");
-      // Reset the stats in cache so the polling logic kicks in (commits=0 temporarily)
-      queryClient.setQueryData(["github", "stats"], (old: any) => ({ ...old, commits: 0 }));
+      // Reset the stats in cache so the polling logic kicks in
+      queryClient.setQueryData(["github", "stats"], (old: any) => ({ ...old, id: 0 }));
       queryClient.invalidateQueries({ queryKey: ["github", "status"] });
     },
     onError: () => {

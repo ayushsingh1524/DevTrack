@@ -20,7 +20,7 @@ export default function GithubPage() {
   const disconnect = useDisconnectGithub();
   const sync = useSyncGithub();
 
-  const isSyncing = stats?.commits === 0 && !!stats; // We set commits=0 temporarily during sync
+  const isSyncing = stats?.id === 0 && !!stats; // We set id=0 temporarily during sync
   const isInitialLoading = statusLoading || (status?.is_connected && statsLoading);
 
   const [token, setToken] = React.useState("");
@@ -48,8 +48,8 @@ export default function GithubPage() {
           <div className="h-20 w-20 bg-white/5 rounded-full flex items-center justify-center mb-6 shadow-2xl border border-white/10">
             <Github size={40} className="text-white" />
           </div>
-          <h1 className="text-3xl font-extrabold text-white mb-4 tracking-tight">Connect to GitHub</h1>
-          <p className="text-white/60 mb-6 leading-relaxed">
+          <h1 className="text-3xl font-extrabold text-foreground mb-4 tracking-tight">Connect to GitHub</h1>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
             Link your GitHub account using a Personal Access Token (PAT) to automatically track your commits, pull requests, and analyze your most used languages.
           </p>
           <div className="w-full flex flex-col gap-3">
@@ -58,7 +58,7 @@ export default function GithubPage() {
               placeholder="ghp_xxxxxxxxxxxx"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              className="w-full bg-[#010409] border border-[#30363d] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+              className="w-full bg-input border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
             />
             <Button 
               onClick={() => connect.mutate(token)}
@@ -69,8 +69,8 @@ export default function GithubPage() {
               Connect GitHub Account
             </Button>
           </div>
-          <p className="text-xs text-white/40 mt-4 text-left w-full">
-            * Needs <span className="text-white/70 bg-white/10 px-1 rounded">repo</span> and <span className="text-white/70 bg-white/10 px-1 rounded">read:user</span> scopes.
+          <p className="text-xs text-muted-foreground mt-4 text-left w-full">
+            * Needs <span className="text-foreground bg-foreground/10 px-1 rounded">repo</span> and <span className="text-foreground bg-foreground/10 px-1 rounded">read:user</span> scopes.
           </p>
         </motion.div>
       </div>
@@ -87,17 +87,17 @@ export default function GithubPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-3">
             <Github size={28} />
             GitHub Overview
           </h1>
-          <p className="text-sm text-white/40 mt-1">
-            Connected as <span className="font-semibold text-white/80">@{status?.username}</span>
+          <p className="text-sm text-muted-foreground mt-1">
+            Connected as <span className="font-semibold text-foreground">@{status?.username}</span>
           </p>
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="text-xs text-white/40 text-right hidden sm:block">
+          <div className="text-xs text-muted-foreground text-right hidden sm:block">
             Last synced: <br />
             {status?.last_synced ? format(new Date(status.last_synced), "MMM d, h:mm a") : 'Never'}
           </div>
@@ -105,7 +105,7 @@ export default function GithubPage() {
             onClick={() => sync.mutate()}
             disabled={sync.isPending || isSyncing}
             variant="outline"
-            className="bg-[#21262d] border-[#30363d] hover:bg-[#30363d] hover:border-[#8b949e] text-white"
+            className="bg-card border-border hover:bg-card/80 text-foreground"
           >
             <RefreshCw size={14} className={`mr-2 ${(sync.isPending || isSyncing) ? 'animate-spin text-blue-400' : ''}`} />
             Sync Now

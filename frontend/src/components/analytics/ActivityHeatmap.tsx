@@ -54,7 +54,7 @@ export function ActivityHeatmap() {
 
   if (isLoading) {
     return (
-      <div className="h-[220px] rounded-2xl border border-white/5 bg-[#121216] flex items-center justify-center">
+      <div className="h-[220px] rounded-2xl border border-border bg-card flex items-center justify-center theme-transition apple-card">
         <Loader2 className="animate-spin text-primary" size={32} />
       </div>
     );
@@ -62,7 +62,7 @@ export function ActivityHeatmap() {
 
   if (isError || !data) {
     return (
-      <div className="h-[220px] rounded-2xl border border-white/5 bg-[#121216] flex items-center justify-center text-white/30 text-sm">
+      <div className="h-[220px] rounded-2xl border border-border bg-card flex items-center justify-center text-muted-foreground text-sm theme-transition apple-card">
         Failed to load heatmap data.
       </div>
     );
@@ -70,7 +70,7 @@ export function ActivityHeatmap() {
 
   const getIntensityColor = (commits: number, tasks: number) => {
     const total = commits + tasks;
-    if (total === 0) return "bg-white/[0.04]";
+    if (total === 0) return "bg-foreground/[0.04]";
     if (total <= 1) return "bg-emerald-800/60";
     if (total <= 3) return "bg-emerald-600/70";
     if (total <= 5) return "bg-emerald-500/80";
@@ -81,20 +81,20 @@ export function ActivityHeatmap() {
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col rounded-2xl border border-white/5 bg-[#121216] p-5 shadow-lg"
+      className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-lg theme-transition apple-card"
     >
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white/90">Contribution Activity</h2>
-          <p className="text-xs text-white/40 mt-0.5">
+          <h2 className="text-lg font-bold text-foreground">Contribution Activity</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
             {data.heatmap.length} days of commits &amp; tasks
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-[10px] text-white/40">
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
           <span>Less</span>
           <div className="flex gap-[3px]">
-            <div className="w-[11px] h-[11px] rounded-[2px] bg-white/[0.04]" />
+            <div className="w-[11px] h-[11px] rounded-[2px] bg-foreground/[0.04]" />
             <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-800/60" />
             <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-600/70" />
             <div className="w-[11px] h-[11px] rounded-[2px] bg-emerald-500/80" />
@@ -112,7 +112,7 @@ export function ActivityHeatmap() {
             {DAY_LABELS.map((label, i) => (
               <div
                 key={i}
-                className="h-[11px] flex items-center text-[9px] text-white/30 leading-none select-none"
+                className="h-[11px] flex items-center text-[9px] text-muted-foreground leading-none select-none"
               >
                 {label}
               </div>
@@ -126,7 +126,7 @@ export function ActivityHeatmap() {
               {monthLabels.map((m, i) => (
                 <span
                   key={i}
-                  className="absolute text-[9px] text-white/35 select-none"
+                  className="absolute text-[9px] text-muted-foreground select-none"
                   style={{ left: m.col * 14 }}
                 >
                   {m.text}
@@ -154,11 +154,11 @@ export function ActivityHeatmap() {
                       >
                         {/* Tooltip */}
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30">
-                          <div className="bg-[#0a0a0c] border border-white/10 rounded-lg px-3 py-2 text-xs shadow-xl flex flex-col items-center">
-                            <span className="font-semibold text-white/90 mb-0.5">
+                          <div className="bg-popover border border-border rounded-lg px-3 py-2 text-xs shadow-xl flex flex-col items-center">
+                            <span className="font-semibold text-foreground mb-0.5">
                               {format(parseISO(day.date), "MMM d, yyyy")}
                             </span>
-                            <span className="text-white/60">
+                            <span className="text-muted-foreground">
                               {day.commits} commits &bull; {day.tasks_completed} tasks
                             </span>
                           </div>

@@ -46,16 +46,16 @@ export function GithubStatsGrid({ stats, isSyncing }: GithubStatsGridProps) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: idx * 0.1 }}
-          className="flex flex-col justify-center rounded-2xl border border-white/10 bg-[#0d1117] p-5 relative overflow-hidden"
+          className="flex flex-col justify-center rounded-2xl border border-border bg-card p-5 relative overflow-hidden theme-transition apple-card"
         >
           <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl ${card.bg} shadow-lg`}>
             {card.icon}
           </div>
           <div>
-            <p className="text-3xl font-bold text-white tracking-tight">
+            <p className="text-3xl font-bold text-foreground tracking-tight">
               {isSyncing ? <span className="animate-pulse">--</span> : card.value}
             </p>
-            <p className="text-sm font-medium text-white/40 mt-1">{card.title}</p>
+            <p className="text-sm font-medium text-muted-foreground mt-1">{card.title}</p>
           </div>
         </motion.div>
       ))}

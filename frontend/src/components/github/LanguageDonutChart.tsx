@@ -10,10 +10,10 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="rounded-xl border border-white/10 bg-[#0d1117]/95 p-3 shadow-2xl backdrop-blur-md">
-        <p className="font-semibold text-white/90 flex items-center gap-2">
+      <div className="rounded-xl border border-border bg-popover/95 p-3 shadow-2xl backdrop-blur-md">
+        <p className="font-semibold text-foreground flex items-center gap-2">
           <span className="w-2 h-2 rounded-full" style={{ backgroundColor: data.color }} />
-          {data.name}: <span className="text-white/60">{data.value}%</span>
+          {data.name}: <span className="text-muted-foreground">{data.value}%</span>
         </p>
       </div>
     );
@@ -42,12 +42,12 @@ export function LanguageDonutChart({ stats, isSyncing }: LanguageDonutChartProps
     <motion.div
       initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col h-[350px] rounded-2xl border border-white/10 bg-[#0d1117] p-6 shadow-lg relative"
+      className="flex flex-col h-[350px] rounded-2xl border border-border bg-card p-6 shadow-lg relative theme-transition apple-card"
     >
       <div className="mb-2 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white/90">Most Used Languages</h2>
-          <p className="text-sm text-white/40 mt-1">Based on repository analysis</p>
+          <h2 className="text-lg font-bold text-foreground">Most Used Languages</h2>
+          <p className="text-sm text-muted-foreground mt-1">Based on repository analysis</p>
         </div>
         <div className="h-10 w-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
           <Code2 className="text-blue-400" size={20} />
@@ -56,7 +56,7 @@ export function LanguageDonutChart({ stats, isSyncing }: LanguageDonutChartProps
 
       <div className="flex-1 w-full h-full flex items-center justify-center relative">
         {isSyncing || chartData.length === 0 ? (
-          <div className="text-white/30 text-sm animate-pulse">Analyzing repositories...</div>
+          <div className="text-muted-foreground text-sm animate-pulse">Analyzing repositories...</div>
         ) : (
           <>
             <ResponsiveContainer width="100%" height="100%">
@@ -81,8 +81,8 @@ export function LanguageDonutChart({ stats, isSyncing }: LanguageDonutChartProps
             {/* Center Label */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="text-center">
-                <p className="text-2xl font-bold text-white">{chartData.length}</p>
-                <p className="text-xs text-white/40">Languages</p>
+                <p className="text-2xl font-bold text-foreground">{chartData.length}</p>
+                <p className="text-xs text-muted-foreground">Languages</p>
               </div>
             </div>
           </>

@@ -2,7 +2,7 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "DevTrack"
+    PROJECT_NAME: str = "TaskNest"
     API_V1_STR: str = "/api/v1"
     
     # DATABASE
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_FROM_NAME: str = "DevTrack"
+    SMTP_FROM_NAME: str = "TaskNest"
     
     class Config:
         case_sensitive = True

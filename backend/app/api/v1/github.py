@@ -19,6 +19,7 @@ from app.models.task import Task
 from app.schemas.github import GithubStatusResponse, GithubStatResponse, GithubConnectRequest
 from app.core.redis import redis_client
 from app.core.config import settings
+from app.core.security import encrypt_github_token, decrypt_github_token
 import re
 from fastapi import Request
 
@@ -165,7 +166,10 @@ async def connect_github(
             
         username = resp.json().get("login")
 
-    current_user.github_access_token = payload.token
+    try:
+        current_user.github_access_token = encrypt_github_token(payload.token)
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(status_code=503, detail="GitHub credential encryption is not configured") from exc
     current_user.github_username = username
     await db.commit()
     
@@ -209,7 +213,12 @@ async def trigger_sync(
     if not current_user.github_access_token:
         raise HTTPException(status_code=400, detail="GitHub not connected")
         
-    background_tasks.add_task(sync_github_data, current_user.id, current_user.github_access_token)
+    try:
+        access_token = decrypt_github_token(current_user.github_access_token)
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(status_code=503, detail="GitHub credential is unavailable") from exc
+
+    background_tasks.add_task(sync_github_data, current_user.id, access_token)
     return {"status": "sync_started"}
 
 @router.get("/stats", response_model=GithubStatResponse)

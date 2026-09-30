@@ -15,14 +15,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - devtrack_net
+    networks: [devtrack_net]
 
   redis:
     image: redis:7-alpine
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - devtrack_redis_data:/data
     healthcheck:
@@ -30,8 +27,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
-    networks:
-      - devtrack_net
+    networks: [devtrack_net]
 
   backend:
     image: ghcr.io/ayushsingh1524/devtrack-backend:latest
@@ -39,19 +35,21 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-devtrack}
       - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=${SECRET_KEY}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_WEBHOOK_SECRET=${GITHUB_WEBHOOK_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - FRONTEND_URL=https://${DOMAIN:-localhost}
+      - COOKIE_SECURE=true
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
+      - SMTP_FROM_NAME=${SMTP_FROM_NAME:-DevTrack}
     depends_on:
       db:
         condition: service_healthy
@@ -62,38 +60,30 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    networks:
-      - devtrack_net
+    networks: [devtrack_net]
 
   celery:
     image: ghcr.io/ayushsingh1524/devtrack-backend:latest
     restart: always
-    command: celery -A app.worker.celery_app worker --loglevel=info
+    command: celery -A app.workers.celery_app worker --loglevel=info
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-devtrack}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
-      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
-      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - FRONTEND_URL=https://${DOMAIN:-localhost}
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    networks:
-      - devtrack_net
+    networks: [devtrack_net]
 
   frontend:
     image: ghcr.io/ayushsingh1524/devtrack-frontend:latest
     restart: always
     environment:
-      - NEXT_PUBLIC_API_URL=https://${DOMAIN:-localhost}/api/v1
+      - BACKEND_URL=http://backend:8000
       - NEXT_PUBLIC_WS_URL=wss://${DOMAIN:-localhost}/api/v1/ws
-    networks:
-      - devtrack_net
+    networks: [devtrack_net]
 
   nginx:
     image: nginx:alpine
@@ -104,11 +94,8 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
-    depends_on:
-      - backend
-      - frontend
-    networks:
-      - devtrack_net
+    depends_on: [backend, frontend]
+    networks: [devtrack_net]
 
 volumes:
   devtrack_postgres_data:

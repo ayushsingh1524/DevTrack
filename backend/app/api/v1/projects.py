@@ -111,7 +111,7 @@ async def get_project(
             selectinload(Project.github_repos),
             selectinload(Project.github_activities)
         )
-        .where(Project.id == project_id)
+        .where(Project.id == project_id, Project.user_id == current_user.id)
     )
     result = await db.execute(query)
     project = result.scalars().first()

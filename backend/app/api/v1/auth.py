@@ -63,7 +63,7 @@ async def login(
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         samesite="lax",
-        secure=False, # Set to True in production
+        secure=settings.COOKIE_SECURE,
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
@@ -270,7 +270,7 @@ async def github_callback(
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         samesite="lax",
-        secure=False, # Set to True in production
+        secure=settings.COOKIE_SECURE,
     )
     return res
 

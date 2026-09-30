@@ -5,13 +5,12 @@ import { useAuthStore } from "@/store/authStore";
 
 interface WebSocketMessage {
   type: string;
-  payload: any;
+  payload: unknown;
 }
 
 export function useWebSocket() {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
-  
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttempts = useRef(0);
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -19,65 +18,47 @@ export function useWebSocket() {
   const { accessToken, isAuthenticated } = useAuthStore();
 
   const connect = useCallback(() => {
-    // Only connect when authenticated and we have a token
-    if (!accessToken || !isAuthenticated) return;
-    if (wsRef.current?.readyState === WebSocket.OPEN) return;
-    if (wsRef.current?.readyState === WebSocket.CONNECTING) return;
+    if (!accessToken || !isAuthenticated || typeof window === "undefined") return;
+    if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) return;
 
-    try {
-      const wsUrl = `ws://localhost:8000/api/v1/ws?token=${accessToken}`;
-      const ws = new WebSocket(wsUrl);
+    const configuredUrl = process.env.NEXT_PUBLIC_WS_URL;
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const baseUrl = configuredUrl || `${protocol}//${window.location.host}/api/v1/ws`;
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    const ws = new WebSocket(`${baseUrl}${separator}token=${encodeURIComponent(accessToken)}`);
 
-      ws.onopen = () => {
-        console.log("[WebSocket] Connected");
-        setIsConnected(true);
-        reconnectAttempts.current = 0;
-      };
+    ws.onopen = () => {
+      setIsConnected(true);
+      reconnectAttempts.current = 0;
+    };
 
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          setLastMessage(data);
-        } catch (e) {
-          // Silently ignore unparseable messages
-        }
-      };
+    ws.onmessage = (event) => {
+      try {
+        setLastMessage(JSON.parse(event.data));
+      } catch {
+        // Ignore malformed server messages.
+      }
+    };
 
-      ws.onclose = (event) => {
-        setIsConnected(false);
-        wsRef.current = null;
+    ws.onclose = () => {
+      setIsConnected(false);
+      wsRef.current = null;
+      if (isAuthenticated && reconnectAttempts.current < maxReconnectAttempts) {
+        const timeout = Math.min(1000 * (2 ** reconnectAttempts.current), 15000);
+        reconnectAttempts.current += 1;
+        reconnectTimer.current = setTimeout(connect, timeout);
+      }
+    };
 
-        // Only reconnect if we're still authenticated and haven't exceeded max attempts
-        if (isAuthenticated && reconnectAttempts.current < maxReconnectAttempts) {
-          const timeout = Math.min(1000 * (2 ** reconnectAttempts.current), 15000);
-          reconnectAttempts.current += 1;
-          // eslint-disable-next-line @typescript-eslint/no-use-before-define
-          reconnectTimer.current = setTimeout(() => connect(), timeout);
-        }
-      };
-
-      ws.onerror = () => {
-        // Silently close — onclose handler will take care of reconnection
-        ws.close();
-      };
-
-      wsRef.current = ws;
-    } catch {
-      // Failed to create WebSocket (e.g. invalid URL) — do nothing
-    }
+    ws.onerror = () => ws.close();
+    wsRef.current = ws;
   }, [accessToken, isAuthenticated]);
 
   useEffect(() => {
     connect();
-    
     return () => {
-      // Clean up on unmount
-      if (reconnectTimer.current) {
-        clearTimeout(reconnectTimer.current);
-      }
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      wsRef.current?.close();
     };
   }, [connect]);
 

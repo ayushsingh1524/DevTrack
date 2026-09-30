@@ -1,5 +1,5 @@
 import axiosInstance from "@/lib/axios";
-import { User } from "./auth.service";
+interface User {\n  id: number;\n  username: string;\n  email?: string;\n  avatar?: string | null;\n}
 import { Task } from "./task.service";
 
 export interface Project {

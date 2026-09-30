@@ -252,74 +252,96 @@ async def get_stats(
 
 @router.post("/webhook")
 async def github_webhook(request: Request, db: AsyncSession = Depends(deps.get_db)):
-    """
-    Receive GitHub webhook payloads.
-    Parses pushes to extract commits, creates GithubActivity, and auto-updates task status.
-    """
+    """Receive authenticated, idempotent GitHub push webhook payloads."""
+    if not settings.GITHUB_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="GitHub webhook is not configured")
+
     body = await request.body()
-    if settings.GITHUB_WEBHOOK_SECRET:
-        signature = request.headers.get("x-hub-signature-256", "")
-        expected = "sha256=" + hmac.new(
-            settings.GITHUB_WEBHOOK_SECRET.encode("utf-8"),
-            body,
-            hashlib.sha256,
-        ).hexdigest()
-        if not hmac.compare_digest(signature, expected):
-            raise HTTPException(status_code=401, detail="Invalid webhook signature")
+    signature = request.headers.get("x-hub-signature-256", "")
+    expected = "sha256=" + hmac.new(
+        settings.GITHUB_WEBHOOK_SECRET.encode("utf-8"),
+        body,
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected):
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
-    event = request.headers.get("x-github-event")
-    if event != "push":
-        return {"status": "ignored", "reason": f"unsupported event type: {event}"}
+    delivery_id = request.headers.get("x-github-delivery", "")
+    if not delivery_id:
+        raise HTTPException(status_code=400, detail="Missing GitHub delivery ID")
 
-    payload = json.loads(body)
-    repo_full_name = payload.get("repository", {}).get("full_name")
-    commits = payload.get("commits", [])
-    
-    if not repo_full_name or not commits:
-        return {"status": "ignored", "reason": "missing repo or commits"}
-        
-    # Find all projects that have this repo linked
-    query = select(ProjectGithubRepo).where(ProjectGithubRepo.repo_full_name == repo_full_name)
-    result = await db.execute(query)
-    linked_repos = result.scalars().all()
-    
-    if not linked_repos:
-        return {"status": "ignored", "reason": "repo not linked to any project"}
-        
-    task_regex = re.compile(r"Fixes #(\d+)", re.IGNORECASE)
-    
-    for linked_repo in linked_repos:
-        project_id = linked_repo.project_id
-        
-        for commit in commits:
-            # Create GithubActivity
-            activity = GithubActivity(
-                project_id=project_id,
-                activity_type="commit",
-                ref_id=commit.get("id", "")[:7],
-                title=commit.get("message", "No message").split("\n")[0],
-                author=commit.get("author", {}).get("name", "Unknown"),
-                url=commit.get("url", ""),
-                timestamp=datetime.fromisoformat(commit.get("timestamp", datetime.now(timezone.utc).isoformat()).replace("Z", "+00:00"))
-            )
-            db.add(activity)
-            
-            # Parse commit message for "Fixes #123"
-            msg = commit.get("message", "")
-            matches = task_regex.findall(msg)
-            
-            for task_id_str in matches:
-                try:
-                    task_id = int(task_id_str)
-                    # Check if task belongs to this project
-                    task_query = select(Task).where(Task.id == task_id, Task.project_id == project_id)
-                    task_result = await db.execute(task_query)
+    delivery_key = f"github:webhook:delivery:{delivery_id}"
+    if redis_client.redis:
+        is_new = await redis_client.redis.set(delivery_key, "processing", ex=86400, nx=True)
+        if not is_new:
+            return {"status": "ignored", "reason": "duplicate delivery"}
+
+    try:
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail="Malformed webhook payload") from exc
+
+        event = request.headers.get("x-github-event")
+        if event != "push":
+            return {"status": "ignored", "reason": f"unsupported event type: {event}"}
+
+        repo_full_name = payload.get("repository", {}).get("full_name")
+        commits = payload.get("commits", [])
+        if not repo_full_name or not commits:
+            return {"status": "ignored", "reason": "missing repo or commits"}
+
+        result = await db.execute(
+            select(ProjectGithubRepo).where(ProjectGithubRepo.repo_full_name == repo_full_name)
+        )
+        linked_repos = result.scalars().all()
+        if not linked_repos:
+            return {"status": "ignored", "reason": "repo not linked to any project"}
+
+        task_regex = re.compile(r"Fixes #(\\d+)", re.IGNORECASE)
+        for linked_repo in linked_repos:
+            project_id = linked_repo.project_id
+            for commit in commits:
+                commit_id = commit.get("id", "")
+                existing = await db.execute(
+                    select(GithubActivity.id).where(
+                        GithubActivity.project_id == project_id,
+                        GithubActivity.activity_type == "commit",
+                        GithubActivity.ref_id == commit_id[:7],
+                    )
+                )
+                if existing.scalar_one_or_none() is not None:
+                    continue
+
+                db.add(GithubActivity(
+                    project_id=project_id,
+                    activity_type="commit",
+                    ref_id=commit_id[:7],
+                    title=commit.get("message", "No message").split("\\n")[0],
+                    author=commit.get("author", {}).get("name", "Unknown"),
+                    url=commit.get("url", ""),
+                    timestamp=datetime.fromisoformat(
+                        commit.get("timestamp", datetime.now(timezone.utc).isoformat()).replace("Z", "+00:00")
+                    ),
+                ))
+
+                for task_id_str in task_regex.findall(commit.get("message", "")):
+                    task_result = await db.execute(
+                        select(Task).where(
+                            Task.id == int(task_id_str),
+                            Task.project_id == project_id,
+                        )
+                    )
                     task = task_result.scalars().first()
-                    
                     if task and task.status != "completed":
                         task.status = "completed"
-                except ValueError:
-                    pass
-                    
-    await db.commit()
-    return {"status": "success"}
+
+        await db.commit()
+        if redis_client.redis:
+            await redis_client.redis.set(delivery_key, "processed", ex=86400)
+        return {"status": "success"}
+    except Exception:
+        await db.rollback()
+        if redis_client.redis:
+            await redis_client.redis.delete(delivery_key)
+        raise

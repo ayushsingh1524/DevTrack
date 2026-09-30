@@ -28,7 +28,9 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str = ""
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    FRONTEND_URL: str = "http://localhost:3000"\n    COOKIE_SECURE: bool = False\n    GITHUB_WEBHOOK_SECRET: str = ""
+    FRONTEND_URL: str = "http://localhost:3000"
+    COOKIE_SECURE: bool = False
+    GITHUB_WEBHOOK_SECRET: str = ""
     
     # SMTP EMAIL
     SMTP_HOST: str = "smtp.gmail.com"

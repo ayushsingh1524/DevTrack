@@ -1,4 +1,4 @@
-name: DevTrack CI
+name: TaskNest CI
 
 on:
   push:

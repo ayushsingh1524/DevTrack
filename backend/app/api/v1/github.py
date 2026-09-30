@@ -260,7 +260,7 @@ async def github_webhook(request: Request, db: AsyncSession = Depends(deps.get_d
         # We only care about push events right now
         return {"status": "ignored", "reason": f"unsupported event type: {event}"}
         
-    payload = await request.json()
+    payload = json.loads(body)
     repo_full_name = payload.get("repository", {}).get("full_name")
     commits = payload.get("commits", [])
     

@@ -254,12 +254,21 @@ async def github_webhook(request: Request, db: AsyncSession = Depends(deps.get_d
     Receive GitHub webhook payloads.
     Parses pushes to extract commits, creates GithubActivity, and auto-updates task status.
     """
+    body = await request.body()
+    if settings.GITHUB_WEBHOOK_SECRET:
+        signature = request.headers.get("x-hub-signature-256", "")
+        expected = "sha256=" + hmac.new(
+            settings.GITHUB_WEBHOOK_SECRET.encode("utf-8"),
+            body,
+            hashlib.sha256,
+        ).hexdigest()
+        if not hmac.compare_digest(signature, expected):
+            raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
     event = request.headers.get("x-github-event")
-    
     if event != "push":
-        # We only care about push events right now
         return {"status": "ignored", "reason": f"unsupported event type: {event}"}
-        
+
     payload = json.loads(body)
     repo_full_name = payload.get("repository", {}).get("full_name")
     commits = payload.get("commits", [])

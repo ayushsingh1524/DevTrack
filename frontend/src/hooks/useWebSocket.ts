@@ -3,9 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 
+interface WebSocketPayload {
+  created_by?: number;
+  title?: string;
+  [key: string]: unknown;
+}
+
 interface WebSocketMessage {
   type: string;
-  payload: unknown;
+  payload: WebSocketPayload;
 }
 
 export function useWebSocket() {

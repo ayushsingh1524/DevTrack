@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
     COOKIE_SECURE: bool = False
     GITHUB_WEBHOOK_SECRET: str = ""
+    GITHUB_TOKEN_ENCRYPTION_KEY: str = ""
     
     # SMTP EMAIL
     SMTP_HOST: str = "smtp.gmail.com"

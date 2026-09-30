@@ -20,6 +20,11 @@ def create_access_token(subject: Union[str, int], expires_delta: Optional[timede
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
+def create_password_reset_token(subject: Union[str, int]) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)
+    to_encode = {"exp": expire, "sub": str(subject), "type": "password_reset"}
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
 def create_refresh_token(subject: Union[str, int], expires_delta: Optional[timedelta] = None) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta

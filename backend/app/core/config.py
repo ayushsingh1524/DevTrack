@@ -28,14 +28,14 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str = ""
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
-    FRONTEND_URL: str = "http://localhost:3000"
+    FRONTEND_URL: str = "http://localhost:3000"\n    COOKIE_SECURE: bool = False\n    GITHUB_WEBHOOK_SECRET: str = ""
     
     # SMTP EMAIL
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_FROM_NAME: str = "TaskNest"
+    SMTP_FROM_NAME: str = "DevTrack"
     
     class Config:
         case_sensitive = True

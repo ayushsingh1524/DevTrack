@@ -118,7 +118,7 @@ async def forgot_password(
         # Don't reveal if user exists or not for security
         return {"message": "If an account exists, a password reset link has been sent."}
     
-    reset_token = security.create_access_token(subject=user.id, expires_delta=security.timedelta(hours=1))
+    reset_token = security.create_password_reset_token(subject=user.id)
     
     # Send the reset email
     try:
@@ -141,7 +141,7 @@ async def reset_password(
             data.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id = payload.get("sub")
-        if not user_id:
+        if not user_id or payload.get("type") != "password_reset":
             raise HTTPException(status_code=400, detail="Invalid token")
     except JWTError:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
@@ -365,6 +365,6 @@ async def google_callback(
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         samesite="lax",
-        secure=False,
+        secure=settings.COOKIE_SECURE,
     )
     return res

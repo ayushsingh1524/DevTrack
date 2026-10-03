@@ -11,6 +11,8 @@ from app.models.user import User
 from app.models.project import Project
 from app.models.task import Task
 from app.models.github import ProjectGithubRepo
+from app.core.security import decrypt_github_token
+import httpx
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectDetailResponse
 from app.schemas.github import ProjectGithubRepoCreate, ProjectGithubRepoResponse
 from app.core.redis import redis_client
@@ -226,9 +228,39 @@ async def link_github_repo(
     if not project or project.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    if not current_user.github_access_token:
+        raise HTTPException(status_code=400, detail="Connect GitHub before linking a repository")
+
+    repo_full_name = repo_in.repo_full_name.strip()
+    parts = repo_full_name.split("/")
+    if len(parts) != 2 or not all(parts):
+        raise HTTPException(status_code=400, detail="Repository must use owner/name format")
+
+    existing = await db.execute(select(ProjectGithubRepo).where(
+        ProjectGithubRepo.project_id == project_id,
+        ProjectGithubRepo.repo_full_name == repo_full_name,
+    ))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Repository already linked")
+
+    try:
+        token = decrypt_github_token(current_user.github_access_token)
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(status_code=503, detail="GitHub credential is unavailable") from exc
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        response = await client.get(
+            "https://api.github.com/repos/" + repo_full_name,
+            headers={"Authorization": "Bearer " + token, "Accept": "application/vnd.github+json"},
+        )
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="GitHub repository not found or inaccessible")
+    if response.status_code != 200:
+        raise HTTPException(status_code=502, detail="GitHub repository verification failed")
+
     repo = ProjectGithubRepo(
         project_id=project_id,
-        repo_full_name=repo_in.repo_full_name
+        repo_full_name=response.json().get("full_name", repo_full_name)
     )
     db.add(repo)
     await db.commit()

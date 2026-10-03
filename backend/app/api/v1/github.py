@@ -23,11 +23,6 @@ from fastapi import Request
 
 router = APIRouter()
 
-# Simple deterministic random for mock fallback
-def get_mock_random(seed: int, index: int, min_val: int, max_val: int) -> int:
-    random.seed(seed + index)
-    return random.randint(min_val, max_val)
-
 async def _github_get(client: httpx.AsyncClient, url: str, headers: dict) -> httpx.Response:
     response = await client.get(url, headers=headers, timeout=20.0)
     if response.status_code == 401:

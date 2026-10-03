@@ -30,7 +30,7 @@ services:
     networks: [devtrack_net]
 
   backend:
-    image: ghcr.io/ayushsingh1524/devtrack-backend:latest
+    image: ghcr.io/ayushsingh1524/tasknest-backend:latest
     restart: always
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-devtrack}
@@ -64,13 +64,15 @@ services:
     networks: [devtrack_net]
 
   celery:
-    image: ghcr.io/ayushsingh1524/devtrack-backend:latest
+    image: ghcr.io/ayushsingh1524/tasknest-backend:latest
     restart: always
     command: celery -A app.workers.celery_app worker --loglevel=info
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-devtrack}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - GITHUB_TOKEN_ENCRYPTION_KEY=${GITHUB_TOKEN_ENCRYPTION_KEY}
     depends_on:
       db:
         condition: service_healthy
@@ -79,7 +81,7 @@ services:
     networks: [devtrack_net]
 
   frontend:
-    image: ghcr.io/ayushsingh1524/devtrack-frontend:latest
+    image: ghcr.io/ayushsingh1524/tasknest-frontend:latest
     restart: always
     environment:
       - BACKEND_URL=http://backend:8000

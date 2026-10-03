@@ -1,13 +1,15 @@
 name: Refresh frontend lockfile
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [fix/stabilize-devtrack]
 
 permissions:
   contents: write
 
 jobs:
   refresh:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

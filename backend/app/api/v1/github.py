@@ -2,8 +2,6 @@ import os
 import json
 import hashlib
 import hmac
-import asyncio
-import random
 from typing import Any, Dict
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
@@ -30,100 +28,95 @@ def get_mock_random(seed: int, index: int, min_val: int, max_val: int) -> int:
     random.seed(seed + index)
     return random.randint(min_val, max_val)
 
+async def _github_get(client: httpx.AsyncClient, url: str, headers: dict) -> httpx.Response:
+    response = await client.get(url, headers=headers, timeout=20.0)
+    if response.status_code == 401:
+        raise ValueError("GitHub credentials are no longer valid")
+    response.raise_for_status()
+    return response
+
+
 async def sync_github_data(user_id: int, access_token: str):
-    """
-    Background task to sync Github data.
-    If real access_token is 'mock_token', generates deterministic mock data.
-    Otherwise, it would call real Github APIs using httpx.
-    """
+    """Synchronize real repository, language, commit and pull-request metrics."""
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
     try:
-        # Simulate network delay for sync
-        await asyncio.sleep(2)
-        
-        commits = 0
-        repos = 0
-        prs = 0
-        top_langs = {}
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            user_resp = await _github_get(client, "https://api.github.com/user", headers)
+            username = user_resp.json().get("login")
+            if not username:
+                raise ValueError("GitHub account has no login")
 
-        if access_token == "mock_token":
-            # Generate deterministic mock data
-            commits = get_mock_random(user_id, 1, 500, 2500)
-            repos = get_mock_random(user_id, 2, 10, 45)
-            prs = get_mock_random(user_id, 3, 20, 150)
-            
-            languages = ["TypeScript", "Python", "Rust", "Go", "HTML"]
-            for i, lang in enumerate(languages):
-                top_langs[lang] = get_mock_random(user_id, 4+i, 5, 40)
-        else:
-            # Real Github API logic
-            async with httpx.AsyncClient() as client:
-                headers = {
-                    "Authorization": f"Bearer {access_token}",
-                    "Accept": "application/vnd.github.v3+json"
+            repos_data = []
+            page = 1
+            while True:
+                response = await _github_get(
+                    client,
+                    f"https://api.github.com/user/repos?per_page=100&page={page}&affiliation=owner,collaborator&sort=updated",
+                    headers,
+                )
+                batch = response.json()
+                repos_data.extend(batch)
+                if len(batch) < 100:
+                    break
+                page += 1
+
+            language_bytes: Dict[str, int] = {}
+            for repo in repos_data[:25]:
+                languages_url = repo.get("languages_url")
+                if not languages_url:
+                    continue
+                response = await _github_get(client, languages_url, headers)
+                for language, byte_count in response.json().items():
+                    language_bytes[language] = language_bytes.get(language, 0) + int(byte_count)
+
+            total_bytes = sum(language_bytes.values())
+            top_langs = {}
+            if total_bytes:
+                ranked = sorted(language_bytes.items(), key=lambda item: item[1], reverse=True)[:8]
+                top_langs = {
+                    language: round((byte_count / total_bytes) * 100, 1)
+                    for language, byte_count in ranked
                 }
-                
-                # Fetch repos
-                repos_resp = await client.get("https://api.github.com/user/repos?per_page=100&affiliation=owner,collaborator", headers=headers)
-                if repos_resp.status_code == 200:
-                    repos_data = repos_resp.json()
-                    repos = len(repos_data)
-                    
-                    # Aggregate languages from top 10 recently updated repos
-                    sorted_repos = sorted(repos_data, key=lambda x: x.get('updated_at', ''), reverse=True)[:10]
-                    lang_freq = {}
-                    for r in sorted_repos:
-                        lang = r.get("language")
-                        if lang:
-                            lang_freq[lang] = lang_freq.get(lang, 0) + 1
-                            
-                    # Calculate percentage (approximate)
-                    total_lang_repos = sum(lang_freq.values())
-                    if total_lang_repos > 0:
-                        for l, c in lang_freq.items():
-                            top_langs[l] = int((c / total_lang_repos) * 100)
-                            
-                # For commits and PRs, we can use search API (approximate for user)
-                # Fetching total commits authored by user
-                user_resp = await client.get("https://api.github.com/user", headers=headers)
-                username = user_resp.json().get("login", "")
-                
-                if username:
-                    # NOTE: search/commits is sometimes preview or requires specific headers.
-                    # As an alternative, let's just fetch events for the user to count recent commits and PRs
-                    events_resp = await client.get(f"https://api.github.com/users/{username}/events?per_page=100", headers=headers)
-                    if events_resp.status_code == 200:
-                        events = events_resp.json()
-                        for ev in events:
-                            if ev["type"] == "PushEvent":
-                                commits += len(ev.get("payload", {}).get("commits", []))
-                            elif ev["type"] == "PullRequestEvent":
-                                prs += 1
-            
-        # Update Database
-        async with AsyncSessionLocal() as db:
-            query = select(GithubStat).where(GithubStat.user_id == user_id)
-            result = await db.execute(query)
-            stat = result.scalars().first()
 
+            commit_search = await _github_get(
+                client,
+                f"https://api.github.com/search/commits?q=author:{username}&per_page=1",
+                headers,
+            )
+            pr_search = await _github_get(
+                client,
+                f"https://api.github.com/search/issues?q=author:{username}+type:pr&per_page=1",
+                headers,
+            )
+
+            commits = int(commit_search.json().get("total_count", 0))
+            prs = int(pr_search.json().get("total_count", 0))
+            repos = len(repos_data)
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(GithubStat).where(GithubStat.user_id == user_id))
+            stat = result.scalars().first()
             if not stat:
                 stat = GithubStat(user_id=user_id)
                 db.add(stat)
-                
+
             stat.commits = commits
             stat.repositories = repos
             stat.pull_requests = prs
             stat.top_languages = top_langs
             stat.updated_at = datetime.now(timezone.utc)
-
             await db.commit()
-        
-        # Invalidate cache
+
         if redis_client.redis:
             await redis_client.redis.delete(f"user:{user_id}:github:stats")
+    except Exception:
+        # Preserve the last successful snapshot rather than replacing it with fabricated data.
+        raise
 
-    except Exception as e:
-        print(f"Background Sync Error: {e}")
-        # In a real app, log error or mark sync as failed
 
 @router.get("/status", response_model=GithubStatusResponse)
 async def get_status(

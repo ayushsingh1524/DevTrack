@@ -1,4 +1,6 @@
 from typing import Any
+import secrets
+from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -63,7 +65,7 @@ async def login(
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         samesite="lax",
-        secure=False, # Set to True in production
+        secure=settings.COOKIE_SECURE,
     )
 
     return {"access_token": access_token, "token_type": "bearer"}
@@ -118,7 +120,7 @@ async def forgot_password(
         # Don't reveal if user exists or not for security
         return {"message": "If an account exists, a password reset link has been sent."}
     
-    reset_token = security.create_access_token(subject=user.id, expires_delta=security.timedelta(hours=1))
+    reset_token = security.create_password_reset_token(subject=user.id)
     
     # Send the reset email
     try:
@@ -141,7 +143,7 @@ async def reset_password(
             data.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         user_id = payload.get("sub")
-        if not user_id:
+        if not user_id or payload.get("type") != "password_reset":
             raise HTTPException(status_code=400, detail="Invalid token")
     except JWTError:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
@@ -171,24 +173,51 @@ async def get_me(
 import httpx
 from fastapi.responses import RedirectResponse
 
+def _set_oauth_state_cookie(response: Response, state: str) -> None:
+    response.set_cookie(
+        key="oauth_state",
+        value=state,
+        httponly=True,
+        max_age=600,
+        samesite="lax",
+        secure=settings.COOKIE_SECURE,
+    )
+
+
+def _validate_oauth_state(request: Request, state: str) -> None:
+    expected_state = request.cookies.get("oauth_state")
+    if not expected_state or not secrets.compare_digest(expected_state, state):
+        raise HTTPException(status_code=400, detail="Invalid OAuth state")
+
+
 @router.get("/github/login")
 async def github_login():
     if not settings.GITHUB_CLIENT_ID:
         raise HTTPException(status_code=500, detail="GitHub Client ID not configured")
     
-    # Redirect to GitHub authorization page
-    url = f"https://github.com/login/oauth/authorize?client_id={settings.GITHUB_CLIENT_ID}&scope=read:user user:email&prompt=consent"
-    return RedirectResponse(url)
+    state = secrets.token_urlsafe(32)
+    params = urlencode({
+        "client_id": settings.GITHUB_CLIENT_ID,
+        "scope": "read:user user:email",
+        "prompt": "consent",
+        "state": state,
+    })
+    res = RedirectResponse(f"https://github.com/login/oauth/authorize?{params}")
+    _set_oauth_state_cookie(res, state)
+    return res
 
 
 @router.get("/github/callback")
 async def github_callback(
+    request: Request,
     code: str,
+    state: str,
     response: Response,
     db: AsyncSession = Depends(deps.get_db)
 ):
     if not settings.GITHUB_CLIENT_ID or not settings.GITHUB_CLIENT_SECRET:
         raise HTTPException(status_code=500, detail="GitHub OAuth not configured")
+    _validate_oauth_state(request, state)
         
     async with httpx.AsyncClient() as client:
         # Get access token
@@ -261,16 +290,17 @@ async def github_callback(
     # But because this is a cross-origin redirect sometimes, we might need a frontend callback page
     # to receive the access token. 
     # We redirect to the frontend with the access token in query param.
-    redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?token={jwt_access_token}"
+    redirect_url = f"{settings.FRONTEND_URL}/oauth/callback"
     
     res = RedirectResponse(url=redirect_url)
+    res.delete_cookie("oauth_state")
     res.set_cookie(
         key="refresh_token",
         value=jwt_refresh_token,
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         samesite="lax",
-        secure=False, # Set to True in production
+        secure=settings.COOKIE_SECURE,
     )
     return res
 
@@ -280,21 +310,32 @@ async def google_login(request: Request):
     if not settings.GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=500, detail="Google Client ID not configured")
         
-    # Redirect to Google authorization page
     redirect_uri = f"{settings.FRONTEND_URL}/api/v1/auth/google/callback"
-    url = f"https://accounts.google.com/o/oauth2/v2/auth?client_id={settings.GOOGLE_CLIENT_ID}&response_type=code&scope=openid email profile&redirect_uri={redirect_uri}&prompt=select_account"
-    return RedirectResponse(url)
+    state = secrets.token_urlsafe(32)
+    params = urlencode({
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "redirect_uri": redirect_uri,
+        "prompt": "select_account",
+        "state": state,
+    })
+    res = RedirectResponse(f"https://accounts.google.com/o/oauth2/v2/auth?{params}")
+    _set_oauth_state_cookie(res, state)
+    return res
 
 
 @router.get("/google/callback")
 async def google_callback(
     request: Request,
     code: str,
+    state: str,
     response: Response,
     db: AsyncSession = Depends(deps.get_db)
 ):
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
         raise HTTPException(status_code=500, detail="Google OAuth not configured")
+    _validate_oauth_state(request, state)
         
     redirect_uri = f"{settings.FRONTEND_URL}/api/v1/auth/google/callback"
         
@@ -359,12 +400,13 @@ async def google_callback(
     redirect_url = f"{settings.FRONTEND_URL}/oauth/callback?token={jwt_access_token}"
     
     res = RedirectResponse(url=redirect_url)
+    res.delete_cookie("oauth_state")
     res.set_cookie(
         key="refresh_token",
         value=jwt_refresh_token,
         httponly=True,
         max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         samesite="lax",
-        secure=False,
+        secure=settings.COOKIE_SECURE,
     )
     return res

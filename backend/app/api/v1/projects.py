@@ -11,6 +11,8 @@ from app.models.user import User
 from app.models.project import Project
 from app.models.task import Task
 from app.models.github import ProjectGithubRepo
+from app.core.security import decrypt_github_token
+import httpx
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectDetailResponse
 from app.schemas.github import ProjectGithubRepoCreate, ProjectGithubRepoResponse
 from app.core.redis import redis_client
@@ -111,7 +113,7 @@ async def get_project(
             selectinload(Project.github_repos),
             selectinload(Project.github_activities)
         )
-        .where(Project.id == project_id)
+        .where(Project.id == project_id, Project.user_id == current_user.id)
     )
     result = await db.execute(query)
     project = result.scalars().first()
@@ -226,12 +228,70 @@ async def link_github_repo(
     if not project or project.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Project not found")
 
+    if not current_user.github_access_token:
+        raise HTTPException(status_code=400, detail="Connect GitHub before linking a repository")
+
+    repo_full_name = repo_in.repo_full_name.strip()
+    parts = repo_full_name.split("/")
+    if len(parts) != 2 or not all(parts):
+        raise HTTPException(status_code=400, detail="Repository must use owner/name format")
+
+    existing = await db.execute(select(ProjectGithubRepo).where(
+        ProjectGithubRepo.project_id == project_id,
+        ProjectGithubRepo.repo_full_name == repo_full_name,
+    ))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Repository already linked")
+
+    try:
+        token = decrypt_github_token(current_user.github_access_token)
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(status_code=503, detail="GitHub credential is unavailable") from exc
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        response = await client.get(
+            "https://api.github.com/repos/" + repo_full_name,
+            headers={"Authorization": "Bearer " + token, "Accept": "application/vnd.github+json"},
+        )
+    if response.status_code == 404:
+        raise HTTPException(status_code=404, detail="GitHub repository not found or inaccessible")
+    if response.status_code != 200:
+        raise HTTPException(status_code=502, detail="GitHub repository verification failed")
+
     repo = ProjectGithubRepo(
         project_id=project_id,
-        repo_full_name=repo_in.repo_full_name
+        repo_full_name=response.json().get("full_name", repo_full_name)
     )
     db.add(repo)
     await db.commit()
     await db.refresh(repo)
 
     return repo
+
+
+@router.delete("/{project_id}/github_repos/{repo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def unlink_github_repo(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    project_id: int,
+    repo_id: int,
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    project_result = await db.execute(
+        select(Project.id).where(Project.id == project_id, Project.user_id == current_user.id)
+    )
+    if project_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    repo_result = await db.execute(
+        select(ProjectGithubRepo).where(
+            ProjectGithubRepo.id == repo_id,
+            ProjectGithubRepo.project_id == project_id,
+        )
+    )
+    linked_repo = repo_result.scalar_one_or_none()
+    if not linked_repo:
+        raise HTTPException(status_code=404, detail="Linked repository not found")
+
+    await db.delete(linked_repo)
+    await db.commit()

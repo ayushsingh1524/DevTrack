@@ -2,6 +2,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends
 from typing import Optional
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app.core.config import settings
 from app.core.websockets import manager
@@ -19,10 +20,9 @@ async def get_user_from_token(token: str, db: AsyncSession) -> Optional[User]:
         if token_data is None:
             return None
             
-        # Parse user_id from subject which is in format: id:username
-        user_id_str = token_data.split(":")[0]
-        user_id = int(user_id_str)
-        return user_id
+        user_id = int(token_data.split(":")[0])
+        result = await db.execute(select(User.id).where(User.id == user_id))
+        return result.scalar_one_or_none()
     except (JWTError, ValueError, IndexError):
         return None
 
@@ -58,4 +58,6 @@ async def websocket_endpoint(
                 await websocket.send_text("pong")
                 
     except WebSocketDisconnect:
+        pass
+    finally:
         manager.disconnect(websocket, user_id)

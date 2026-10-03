@@ -2,7 +2,7 @@ import os
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "DevTrack"
+    PROJECT_NAME: str = "TaskNest"
     API_V1_STR: str = "/api/v1"
     
     # DATABASE
@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     FRONTEND_URL: str = "http://localhost:3000"
+    COOKIE_SECURE: bool = False
+    GITHUB_WEBHOOK_SECRET: str = ""
+    GITHUB_TOKEN_ENCRYPTION_KEY: str = ""
     
     # SMTP EMAIL
     SMTP_HOST: str = "smtp.gmail.com"

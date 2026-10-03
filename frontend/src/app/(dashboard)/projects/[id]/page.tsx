@@ -171,7 +171,7 @@ export default function ProjectDetailPage() {
             <KanbanBoard 
               tasks={project.tasks} 
               onTaskClick={(id) => router.push(`/tasks/${id}`)}
-              onTaskUpdate={(taskId, newStatus) => {
+              onTaskUpdate={(taskId, newStatus: "todo" | "in_progress" | "review" | "completed") => {
                 updateTask.mutate({ id: taskId, data: { status: newStatus } });
               }}
             />

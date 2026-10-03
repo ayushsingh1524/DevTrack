@@ -267,3 +267,31 @@ async def link_github_repo(
     await db.refresh(repo)
 
     return repo
+
+
+@router.delete("/{project_id}/github_repos/{repo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def unlink_github_repo(
+    *,
+    db: AsyncSession = Depends(deps.get_db),
+    project_id: int,
+    repo_id: int,
+    current_user: User = Depends(deps.get_current_user),
+) -> None:
+    project_result = await db.execute(
+        select(Project.id).where(Project.id == project_id, Project.user_id == current_user.id)
+    )
+    if project_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    repo_result = await db.execute(
+        select(ProjectGithubRepo).where(
+            ProjectGithubRepo.id == repo_id,
+            ProjectGithubRepo.project_id == project_id,
+        )
+    )
+    linked_repo = repo_result.scalar_one_or_none()
+    if not linked_repo:
+        raise HTTPException(status_code=404, detail="Linked repository not found")
+
+    await db.delete(linked_repo)
+    await db.commit()
